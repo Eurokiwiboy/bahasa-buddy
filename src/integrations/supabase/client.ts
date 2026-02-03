@@ -4,17 +4,11 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// Environment variables with hardcoded fallback for development
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ||
-  'https://zxmwfvyqrtqtsrfhdvhv.supabase.co';
+// HARDCODED credentials - ignoring Lovable's env vars to use Elliott's Supabase project
+// Project: zxmwfvyqrtqtsrfhdvhv (NOT Lovable's efpgaasufgsfimakduve)
+const SUPABASE_URL = 'https://zxmwfvyqrtqtsrfhdvhv.supabase.co';
 
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY ||
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4bXdmdnlxcnRxdHNyZmhkdmh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNTkzNjUsImV4cCI6MjA4NTYzNTM2NX0.5vaShQEGwrpzKtX6mAI22Ta5UU72CiwbBf4wbgRWAvI';
-
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error('Missing Supabase credentials');
-}
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4bXdmdnlxcnRxdHNyZmhkdmh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNTkzNjUsImV4cCI6MjA4NTYzNTM2NX0.5vaShQEGwrpzKtX6mAI22Ta5UU72CiwbBf4wbgRWAvI';
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
