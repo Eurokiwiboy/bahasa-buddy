@@ -1,73 +1,38 @@
-# Welcome to your Lovable project
+# Bahasa Buddy
 
-## Project info
+A Duolingo-inspired app for learning Bahasa Indonesia. Practice vocabulary with spaced-repetition flashcards, take quizzes, chat with the community, and track your progress with XP and achievements.
 
-**URL**: (https://lovable.dev/projects/7a391f57-3cd5-4582-8f22-004ade317f2a)
+## Features
 
-## How can I edit this code?
+- Splash card flashcards with SM-2 spaced repetition
+- Practice quizzes (multiple choice, fill-in-the-blank, listening, speed round)
+- Community chat rooms with real-time messaging
+- XP system, achievements, streaks, and daily goals
+- Google and Apple OAuth sign-in
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, Supabase, Framer Motion, Tanstack Query
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/7a391f57-3cd5-4582-8f22-004ade317f2a)) and start prompting.
+## Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
+1. Clone the repo
+2. Copy `.env.example` to `.env` and fill in your Supabase credentials
+3. `npm install`
+4. `npm run dev`
 
-**Use your preferred IDE**
+The dev server runs at http://localhost:8080.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Database Setup
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1. Install Supabase CLI: `brew install supabase/tap/supabase`
+2. Log in: `supabase login`
+3. Link your project: `supabase link --project-ref <your-project-ref>`
+4. Apply migrations: `supabase db push`
 
-Follow these steps:
+## Testing
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```bash
+npm test          # Run all tests
+npm run test:watch  # Run tests in watch mode
 ```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
