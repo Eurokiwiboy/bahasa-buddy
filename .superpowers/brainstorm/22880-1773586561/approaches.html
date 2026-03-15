@@ -1,0 +1,44 @@
+<h2>Security & Infrastructure: 3 Approaches</h2>
+<p class="subtitle">All approaches fix the exposed keys and missing RLS. They differ in how much infrastructure we set up now vs later.</p>
+
+<div class="options">
+  <div class="option" data-choice="minimal" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>🩹 Minimal Patch (fastest)</h3>
+      <p><strong>Do:</strong> Enable RLS on all tables, rotate anon key, move credentials to .env, add .env to .gitignore, create .env.example, scrub git history of keys.</p>
+      <p><strong>Skip:</strong> No CLI setup, no migrations, no schema versioning.</p>
+      <div style="margin-top:8px;padding:8px 12px;background:rgba(255,255,255,0.05);border-radius:6px;font-size:13px;">
+        <strong>Effort:</strong> ~2 hours &nbsp;|&nbsp; <strong>Risk after:</strong> Low (keys secured, RLS active) &nbsp;|&nbsp; <strong>Tech debt:</strong> High (no schema versioning)
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="proper" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>🏗️ Proper Foundation (recommended)</h3>
+      <p><strong>Do:</strong> Everything in A, plus: set up Supabase CLI, export current schema as baseline migration, add RLS policies as code, add .env.example, update README, add basic tests for auth flow.</p>
+      <p><strong>Skip:</strong> No CI/CD pipeline, no staging environment.</p>
+      <div style="margin-top:8px;padding:8px 12px;background:rgba(255,255,255,0.05);border-radius:6px;font-size:13px;">
+        <strong>Effort:</strong> ~4-6 hours &nbsp;|&nbsp; <strong>Risk after:</strong> Very low &nbsp;|&nbsp; <strong>Tech debt:</strong> Low (schema in code, reproducible)
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="full" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>🚀 Production-Grade (most thorough)</h3>
+      <p><strong>Do:</strong> Everything in B, plus: separate staging/prod Supabase projects, GitHub Actions CI, automated migration checks, Supabase Edge Functions for sensitive operations, security headers, CSP policy.</p>
+      <div style="margin-top:8px;padding:8px 12px;background:rgba(255,255,255,0.05);border-radius:6px;font-size:13px;">
+        <strong>Effort:</strong> ~2-3 days &nbsp;|&nbsp; <strong>Risk after:</strong> Minimal &nbsp;|&nbsp; <strong>Tech debt:</strong> Very low (production-ready infra)
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:24px;padding:16px;background:rgba(255,180,0,0.08);border:1px solid rgba(255,180,0,0.2);border-radius:8px;">
+  <h3 style="margin:0 0 8px 0;color:#ffb400;">💡 My Recommendation: Option B</h3>
+  <p style="margin:0;font-size:14px;">It fixes the urgent security holes AND gives you a proper development foundation (migrations, env handling, schema-as-code) without overengineering for a personal project. Option C makes sense later when you're ready for SaaS, but it's overkill right now.</p>
+</div>

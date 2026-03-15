@@ -1,0 +1,64 @@
+<h2>Design Section 4: Cleanup, README & Testing</h2>
+<p class="subtitle">Tying up loose ends — removing Lovable artifacts, updating docs, and adding basic test coverage.</p>
+
+<div class="section">
+  <h3>Lovable Cleanup</h3>
+  <div class="mockup">
+    <div class="mockup-header">Files to clean up</div>
+    <div class="mockup-body" style="font-size:13px;line-height:1.8;">
+      <div><span style="color:#ff6b6b;">Remove:</span> .env file from repo (add to .gitignore)</div>
+      <div><span style="color:#ff6b6b;">Remove:</span> Lovable project ID references in config.toml and code</div>
+      <div><span style="color:#ffd43b;">Update:</span> README.md — replace "Lovable App" with "Bahasa Buddy", accurate tech stack, setup instructions</div>
+      <div><span style="color:#ffd43b;">Update:</span> client.ts — remove hardcoded keys, use env vars</div>
+      <div><span style="color:#ffd43b;">Update:</span> supabase/config.toml — your project ID only</div>
+      <div><span style="color:#51cf66;">Add:</span> .env.example with placeholder values and comments</div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <h3>README Rewrite</h3>
+  <div class="mockup">
+    <div class="mockup-header">New README structure</div>
+    <div class="mockup-body" style="font-size:13px;line-height:1.8;">
+      <div><strong># Bahasa Buddy</strong></div>
+      <div>A Duolingo-inspired app for learning Bahasa Indonesia.</div>
+      <div style="margin-top:8px;"><strong>## Features</strong> — flashcards, quizzes, community chat, XP system</div>
+      <div><strong>## Tech Stack</strong> — React, TypeScript, Vite, Supabase, Tailwind</div>
+      <div><strong>## Getting Started</strong></div>
+      <div>&nbsp;&nbsp;1. Clone repo</div>
+      <div>&nbsp;&nbsp;2. Copy .env.example to .env, fill in Supabase credentials</div>
+      <div>&nbsp;&nbsp;3. npm install && npm run dev</div>
+      <div><strong>## Database Setup</strong> — link Supabase, run migrations</div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <h3>Basic Test Coverage</h3>
+  <div class="mockup">
+    <div class="mockup-header">Tests to add (vitest is already installed)</div>
+    <div class="mockup-body" style="font-size:13px;line-height:1.8;">
+      <div><strong>src/__tests__/</strong></div>
+      <div>&nbsp;&nbsp;├── supabase-client.test.ts <span style="color:#888;">← verifies client reads from env, not hardcoded</span></div>
+      <div>&nbsp;&nbsp;├── env-validation.test.ts <span style="color:#888;">← fails if required env vars are missing</span></div>
+      <div>&nbsp;&nbsp;└── auth-flow.test.ts <span style="color:#888;">← basic unit tests for useAuth hook (mocked Supabase)</span></div>
+    </div>
+  </div>
+
+  <div style="margin-top:12px;font-size:14px;line-height:1.6;">
+    <p>These are <strong>guard-rail tests</strong> — they prevent regressions on the security fixes we're making. For example, the supabase-client test will fail if anyone re-introduces hardcoded credentials. Lightweight but high value.</p>
+  </div>
+</div>
+
+<div style="margin-top:24px;padding:16px;background:rgba(100,255,100,0.08);border:1px solid rgba(100,255,100,0.2);border-radius:8px;">
+  <h3 style="margin:0 0 8px 0;">✅ Summary: Full Design at a Glance</h3>
+  <div style="font-size:14px;line-height:1.8;">
+    <div><strong>Section 1:</strong> Credential security — env vars, key rotation, git history scrub</div>
+    <div><strong>Section 2:</strong> RLS policies — 3-tier access control on all tables</div>
+    <div><strong>Section 3:</strong> Supabase CLI — migrations as code, reproducible schema</div>
+    <div><strong>Section 4:</strong> Cleanup — Lovable removal, README rewrite, guard-rail tests</div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:24px;">Does this final section look right? If all 4 sections are approved, I'll write the full design spec document.</p>

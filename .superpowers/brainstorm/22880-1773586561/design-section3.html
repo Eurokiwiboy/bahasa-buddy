@@ -1,0 +1,52 @@
+<h2>Design Section 3: Supabase CLI & Schema Migrations</h2>
+<p class="subtitle">Version-controlling your database so you never lose track of what's deployed and can reproduce your setup anywhere.</p>
+
+<div class="section">
+  <h3>Setup</h3>
+  <div class="mockup">
+    <div class="mockup-header">New project structure (supabase/ directory)</div>
+    <div class="mockup-body" style="font-family:monospace;font-size:13px;line-height:1.8;">
+      <div>supabase/</div>
+      <div>&nbsp;&nbsp;├── config.toml <span style="color:#888;">← updated with your project ID</span></div>
+      <div>&nbsp;&nbsp;├── migrations/</div>
+      <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── 00000000000000_baseline.sql <span style="color:#888;">← exported current schema</span></div>
+      <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── 00000000000001_enable_rls.sql <span style="color:#888;">← RLS policies from Section 2</span></div>
+      <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── 00000000000002_secure_rpc.sql <span style="color:#888;">← lock down add_xp function</span></div>
+      <div>&nbsp;&nbsp;└── seed.sql <span style="color:#888;">← optional: sample categories/cards for fresh setup</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <h3>How It Works</h3>
+  <ul style="font-size:14px;line-height:1.8;">
+    <li><strong>Baseline migration</strong> — we'll export your current live schema using <code>supabase db dump</code> and save it as the first migration. This captures all your existing tables exactly as they are.</li>
+    <li><strong>RLS migration</strong> — the policies from Section 2 go in a separate migration file so they're trackable and reversible.</li>
+    <li><strong>Future changes</strong> — any new tables, columns, or policies get their own migration file. Run <code>supabase db push</code> to apply.</li>
+    <li><strong>config.toml</strong> — updated to point at your project (zxmwfv...), removing all Lovable references.</li>
+  </ul>
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <h3>Developer Workflow Going Forward</h3>
+  <div class="mockup">
+    <div class="mockup-header">Commands you'll use</div>
+    <div class="mockup-body" style="font-family:monospace;font-size:13px;line-height:1.8;">
+      <div><span style="color:#51cf66;">$</span> supabase link --project-ref zxmwfvyqrtqtsrfhdvhv</div>
+      <div style="color:#888;"># Links local project to your remote Supabase project</div>
+      <div style="margin-top:8px;"><span style="color:#51cf66;">$</span> supabase db diff --schema public</div>
+      <div style="color:#888;"># Shows differences between local migrations and remote DB</div>
+      <div style="margin-top:8px;"><span style="color:#51cf66;">$</span> supabase migration new add_some_feature</div>
+      <div style="color:#888;"># Creates a new timestamped migration file</div>
+      <div style="margin-top:8px;"><span style="color:#51cf66;">$</span> supabase db push</div>
+      <div style="color:#888;"># Applies pending migrations to your remote database</div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:24px;padding:16px;background:rgba(100,180,255,0.08);border:1px solid rgba(100,180,255,0.2);border-radius:8px;">
+  <h3 style="margin:0 0 8px 0;">📦 Prerequisites</h3>
+  <p style="margin:0;font-size:14px;">You'll need to install the Supabase CLI (<code>brew install supabase/tap/supabase</code> on macOS) and log in with <code>supabase login</code>. We'll include these steps in the implementation plan.</p>
+</div>
+
+<p class="subtitle" style="margin-top:24px;">Does this section look right? Say "looks good" to continue to the final section (cleanup & testing), or let me know what to change.</p>

@@ -1,0 +1,46 @@
+<h2>Design Section 1: Credential Security</h2>
+<p class="subtitle">The most urgent piece — securing exposed API keys and preventing future leaks.</p>
+
+<div class="section">
+  <h3>What Changes</h3>
+
+  <div class="mockup">
+    <div class="mockup-header">Before (current state)</div>
+    <div class="mockup-body" style="font-family:monospace;font-size:13px;line-height:1.6;">
+      <div style="color:#ff6b6b;">❌ .env committed to repo with Lovable's Supabase keys</div>
+      <div style="color:#ff6b6b;">❌ client.ts has YOUR keys hardcoded, overriding .env</div>
+      <div style="color:#ff6b6b;">❌ Both sets of keys visible in git history</div>
+      <div style="color:#ff6b6b;">❌ No .gitignore entry for .env</div>
+      <div style="color:#ff6b6b;">❌ No .env.example for new contributors</div>
+    </div>
+  </div>
+
+  <div class="mockup" style="margin-top:16px;">
+    <div class="mockup-header">After (proposed)</div>
+    <div class="mockup-body" style="font-family:monospace;font-size:13px;line-height:1.6;">
+      <div style="color:#51cf66;">✅ .env added to .gitignore (never committed again)</div>
+      <div style="color:#51cf66;">✅ client.ts reads from import.meta.env (no hardcoded keys)</div>
+      <div style="color:#51cf66;">✅ .env.example with placeholder values committed</div>
+      <div style="color:#51cf66;">✅ Supabase anon key rotated in dashboard</div>
+      <div style="color:#51cf66;">✅ Git history scrubbed of old keys (BFG Repo-Cleaner)</div>
+      <div style="color:#51cf66;">✅ Lovable project references fully removed</div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <h3>Key Decisions</h3>
+  <ul style="font-size:14px;line-height:1.8;">
+    <li><strong>Rotate the anon key</strong> in Supabase dashboard — the old one is compromised</li>
+    <li><strong>client.ts</strong> will use <code>import.meta.env.VITE_SUPABASE_URL</code> and <code>import.meta.env.VITE_SUPABASE_ANON_KEY</code></li>
+    <li><strong>Git history scrub</strong> — use BFG Repo-Cleaner to remove old .env and hardcoded keys from all past commits</li>
+    <li><strong>Lovable deployment</strong> — update env vars in Lovable's deployment settings after key rotation</li>
+  </ul>
+</div>
+
+<div style="margin-top:24px;padding:16px;background:rgba(100,180,255,0.08);border:1px solid rgba(100,180,255,0.2);border-radius:8px;">
+  <h3 style="margin:0 0 8px 0;">⚠️ Note: Manual Steps Required</h3>
+  <p style="margin:0;font-size:14px;">Key rotation and Lovable env var updates must be done by you in the Supabase dashboard and Lovable settings. We'll provide exact instructions in the plan.</p>
+</div>
+
+<p class="subtitle" style="margin-top:24px;">Does this section look right? Say "looks good" to continue to the next section, or let me know what to change.</p>

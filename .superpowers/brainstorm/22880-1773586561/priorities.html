@@ -1,0 +1,36 @@
+<h2>What should we tackle first?</h2>
+<p class="subtitle">Your app has solid foundations. Here are the key improvement areas I found — pick your top priority.</p>
+
+<div class="options">
+  <div class="option" data-choice="security" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>🔒 Security & Infrastructure First</h3>
+      <p>Fix hardcoded API keys, add proper .env handling, set up database migrations, add RLS policies. <strong>Critical before anything public-facing.</strong></p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="voice" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>🎙️ Voice Engine System</h3>
+      <p>Add speech recognition & text-to-speech for pronunciation practice — the Duolingo-like feature you mentioned. Likely needs a backend service (not just client-side).</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="backend" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>⚙️ Full Backend System</h3>
+      <p>Move from direct Supabase client calls to a proper backend API layer (Edge Functions or separate server). Needed for voice engine, content management, and future SaaS.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="all-foundation" onclick="toggleSelect(this)">
+    <div class="letter">D</div>
+    <div class="content">
+      <h3>🏗️ All Foundations Together</h3>
+      <p>Security + Backend + Voice as one phased plan. Fix the critical stuff first, build the backend layer, then add voice on top. Methodical but more work upfront.</p>
+    </div>
+  </div>
+</div>

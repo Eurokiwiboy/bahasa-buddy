@@ -1,0 +1,52 @@
+<h2>Design Section 2: Row Level Security (RLS)</h2>
+<p class="subtitle">Locking down who can read and write what in your database. This is your primary defense even when the anon key is public (which is normal for Supabase).</p>
+
+<div class="section">
+  <h3>RLS Policy Design Per Table</h3>
+
+  <div class="mockup">
+    <div class="mockup-header">User-Owned Data (strict — users see only their own)</div>
+    <div class="mockup-body" style="font-size:13px;line-height:1.8;">
+      <div><strong>profiles</strong> — SELECT/UPDATE own row only (auth.uid() = id)</div>
+      <div><strong>user_card_progress</strong> — SELECT/INSERT/UPDATE own rows only</div>
+      <div><strong>user_lesson_progress</strong> — SELECT/INSERT/UPDATE own rows only</div>
+      <div><strong>daily_goals</strong> — SELECT/INSERT/UPDATE own rows only</div>
+      <div><strong>user_achievements</strong> — SELECT/INSERT own rows only</div>
+      <div><strong>xp_transactions</strong> — SELECT own rows only, INSERT via RPC only</div>
+    </div>
+  </div>
+
+  <div class="mockup" style="margin-top:16px;">
+    <div class="mockup-header">Shared Content (read-only for authenticated users)</div>
+    <div class="mockup-body" style="font-size:13px;line-height:1.8;">
+      <div><strong>categories</strong> — SELECT for all authenticated users, no INSERT/UPDATE/DELETE</div>
+      <div><strong>splash_cards</strong> — SELECT for all authenticated users, no INSERT/UPDATE/DELETE</div>
+      <div><strong>lessons</strong> — SELECT for all authenticated users, no INSERT/UPDATE/DELETE</div>
+      <div><strong>phrases</strong> — SELECT for all authenticated users, no INSERT/UPDATE/DELETE</div>
+      <div><strong>achievements</strong> — SELECT for all authenticated users, no INSERT/UPDATE/DELETE</div>
+    </div>
+  </div>
+
+  <div class="mockup" style="margin-top:16px;">
+    <div class="mockup-header">Community Chat (scoped to room membership)</div>
+    <div class="mockup-body" style="font-size:13px;line-height:1.8;">
+      <div><strong>chat_rooms</strong> — SELECT for all authenticated users</div>
+      <div><strong>chat_room_members</strong> — SELECT/INSERT own membership, DELETE own membership</div>
+      <div><strong>chat_messages</strong> — SELECT if member of room, INSERT if member of room, UPDATE/DELETE own messages only</div>
+      <div><strong>message_reactions</strong> — SELECT if member of room, INSERT/DELETE own reactions only</div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <h3>Key Principles</h3>
+  <ul style="font-size:14px;line-height:1.8;">
+    <li><strong>Default deny</strong> — RLS enabled on all tables, no policies = no access</li>
+    <li><strong>Content tables are read-only</strong> — only admins (via service_role key in dashboard) can add lessons/cards</li>
+    <li><strong>Chat scoped to membership</strong> — must be a room member to see/send messages</li>
+    <li><strong>XP insert via RPC only</strong> — prevents users from giving themselves arbitrary XP</li>
+    <li><strong>All policies written as migration files</strong> — version controlled and reproducible</li>
+  </ul>
+</div>
+
+<p class="subtitle" style="margin-top:24px;">Does this section look right? Say "looks good" to continue to the next section (Supabase CLI & migrations), or let me know what to change.</p>

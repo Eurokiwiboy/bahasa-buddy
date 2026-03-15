@@ -1,0 +1,28 @@
+<h2>Do you have Row Level Security (RLS) enabled?</h2>
+<p class="subtitle">RLS controls who can read/write which rows in your database. Without it, anyone with your anon key can read or modify all data. This is the #1 security concern with exposed Supabase keys.</p>
+
+<div class="options">
+  <div class="option" data-choice="rls-yes" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Yes, RLS is enabled</h3>
+      <p>I set up RLS policies on my tables in the Supabase dashboard. Users can only access their own data.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="rls-partial" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Partially / Not sure</h3>
+      <p>Some tables might have it, but I haven't systematically set it up. Or I'm not sure what state it's in.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="rls-no" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>No / Don't know what RLS is</h3>
+      <p>I haven't set up any row-level policies. Tables are probably open to anyone with the anon key.</p>
+    </div>
+  </div>
+</div>

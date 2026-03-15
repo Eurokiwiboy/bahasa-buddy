@@ -1,0 +1,28 @@
+<h2>Which Supabase project is the real one?</h2>
+<p class="subtitle">Your code has two Supabase projects. The .env points to Lovable's project (efpgaa...), but client.ts hardcodes yours (zxmwfv...) with a comment saying "use Elliott's project." Which one has your actual data?</p>
+
+<div class="options">
+  <div class="option" data-choice="mine" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>My project (zxmwfv...)</h3>
+      <p>The hardcoded one in client.ts is correct. That's where my real tables, users, and data live. Lovable's project can be abandoned.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="lovable" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Lovable's project (efpgaa...)</h3>
+      <p>The .env one is correct. The hardcoded override in client.ts was a mistake or experiment.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="unsure" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Not sure / both have data</h3>
+      <p>I've used both at different times and I'm not sure which is the canonical one.</p>
+    </div>
+  </div>
+</div>
