@@ -1,0 +1,22 @@
+-- EMERGENCY ROLLBACK: Disable RLS on all tables
+-- Only run this if RLS migration breaks the live app
+-- Run manually via Supabase dashboard SQL editor
+
+ALTER TABLE profiles DISABLE ROW LEVEL SECURITY;
+ALTER TABLE user_card_progress DISABLE ROW LEVEL SECURITY;
+ALTER TABLE user_lesson_progress DISABLE ROW LEVEL SECURITY;
+ALTER TABLE daily_goals DISABLE ROW LEVEL SECURITY;
+ALTER TABLE user_achievements DISABLE ROW LEVEL SECURITY;
+ALTER TABLE xp_transactions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE categories DISABLE ROW LEVEL SECURITY;
+ALTER TABLE splash_cards DISABLE ROW LEVEL SECURITY;
+ALTER TABLE lessons DISABLE ROW LEVEL SECURITY;
+ALTER TABLE phrases DISABLE ROW LEVEL SECURITY;
+ALTER TABLE achievements DISABLE ROW LEVEL SECURITY;
+ALTER TABLE chat_rooms DISABLE ROW LEVEL SECURITY;
+ALTER TABLE chat_room_members DISABLE ROW LEVEL SECURITY;
+ALTER TABLE chat_messages DISABLE ROW LEVEL SECURITY;
+ALTER TABLE message_reactions DISABLE ROW LEVEL SECURITY;
+
+-- Re-grant INSERT on xp_transactions if needed
+GRANT INSERT ON xp_transactions TO anon, authenticated;
