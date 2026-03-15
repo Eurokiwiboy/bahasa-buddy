@@ -1,9 +1,30 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, Volume2, Check, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCards } from '@/hooks/useCards';
+
+// Map category names to CSS gradient class suffixes
+const categoryGradientMap: Record<string, string> = {
+  'Greetings': 'greetings',
+  'Food': 'food',
+  'Travel': 'travel',
+  'Shopping': 'shopping',
+  'Emergency': 'emergency',
+  'Numbers': 'numbers',
+  'Daily Life': 'daily-life',
+  'Formal': 'formal',
+};
+
+function speakIndonesian(text: string) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'id-ID';
+  utterance.rate = 0.85;
+  window.speechSynthesis.speak(utterance);
+}
 
 export default function SplashCardsPage() {
   const { categoryId } = useParams<{ categoryId: string }>();
@@ -16,8 +37,10 @@ export default function SplashCardsPage() {
   const [masteredCards, setMasteredCards] = useState<string[]>([]);
   const [reviewCards, setReviewCards] = useState<string[]>([]);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
 
   const category = categories.find(c => c.id === categoryId);
+  const gradientSuffix = category ? (categoryGradientMap[category.name] || 'greetings') : 'greetings';
 
   useEffect(() => {
     if (categoryId) {
@@ -31,14 +54,11 @@ export default function SplashCardsPage() {
 
   const currentCard = cards[currentIndex];
 
-  const x = useMotionValue(0);
-  const rotate = useTransform(x, [-200, 200], [-15, 15]);
-  const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0.5, 1, 1, 1, 0.5]);
-
-  const handleSwipe = async (direction: 'left' | 'right') => {
+  const handleSwipe = useCallback(async (direction: 'left' | 'right') => {
     if (!currentCard) return;
 
     const isCorrect = direction === 'right';
+    setSwipeDirection(direction);
 
     if (isCorrect) {
       setMasteredCards(prev => [...prev, currentCard.id]);
@@ -46,16 +66,19 @@ export default function SplashCardsPage() {
       setReviewCards(prev => [...prev, currentCard.id]);
     }
 
-    // Record the review in Supabase
     await recordCardReview(currentCard.id, isCorrect);
 
-    if (currentIndex < cards.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-      setIsFlipped(false);
-    } else {
-      setShowCelebration(true);
-    }
-  };
+    // Small delay for exit animation
+    setTimeout(() => {
+      if (currentIndex < cards.length - 1) {
+        setCurrentIndex(prev => prev + 1);
+        setIsFlipped(false);
+        setSwipeDirection(null);
+      } else {
+        setShowCelebration(true);
+      }
+    }, 200);
+  }, [currentCard, currentIndex, cards.length, recordCardReview]);
 
   if (loading || hooksLoading) {
     return (
@@ -97,7 +120,7 @@ export default function SplashCardsPage() {
           </motion.div>
           <h1 className="text-3xl font-bold text-foreground mb-2">Deck Complete!</h1>
           <p className="text-muted-foreground mb-6">
-            {masteredCards.length} mastered • {reviewCards.length} to review
+            {masteredCards.length} mastered · {reviewCards.length} to review
           </p>
           <div className="flex gap-3 justify-center">
             <Button onClick={() => navigate('/learn')} variant="outline" className="rounded-xl">
@@ -110,6 +133,7 @@ export default function SplashCardsPage() {
                 setMasteredCards([]);
                 setReviewCards([]);
                 setShowCelebration(false);
+                setSwipeDirection(null);
               }}
               className="btn-primary"
             >
@@ -133,7 +157,7 @@ export default function SplashCardsPage() {
         </button>
         <div className="flex-1">
           <div className="flex gap-1">
-            {cards.slice(0, Math.min(cards.length, 10)).map((_, i) => (
+            {cards.slice(0, Math.min(cards.length, 15)).map((_, i) => (
               <div
                 key={i}
                 className={`h-1 flex-1 rounded-full transition-colors ${
@@ -149,14 +173,18 @@ export default function SplashCardsPage() {
       </div>
 
       {/* Card Area */}
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center" style={{ perspective: '1200px' }}>
         <AnimatePresence mode="wait">
           <motion.div
             key={currentCard.id}
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            style={{ x, rotate, opacity }}
+            initial={{ scale: 0.9, opacity: 0, y: 30 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{
+              x: swipeDirection === 'right' ? 300 : swipeDirection === 'left' ? -300 : 0,
+              opacity: 0,
+              scale: 0.8,
+              transition: { duration: 0.2 },
+            }}
             drag="x"
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.7}
@@ -164,57 +192,53 @@ export default function SplashCardsPage() {
               if (info.offset.x > 100) handleSwipe('right');
               else if (info.offset.x < -100) handleSwipe('left');
             }}
-            onClick={() => setIsFlipped(!isFlipped)}
-            className="cursor-pointer w-full max-w-sm"
+            className="cursor-pointer w-full max-w-sm select-none"
           >
             <div
-              className="splash-card splash-card-greetings aspect-[3/4] relative"
-              style={{ transformStyle: 'preserve-3d' }}
+              className={`splash-card splash-card-${gradientSuffix} aspect-[3/4] rounded-3xl shadow-xl`}
+              onClick={() => setIsFlipped(!isFlipped)}
             >
-              {/* Front */}
-              <div
-                className={`absolute inset-0 p-6 flex flex-col items-center justify-center text-white transition-opacity duration-300 ${
-                  isFlipped ? 'opacity-0 pointer-events-none' : 'opacity-100'
-                }`}
-              >
-                <button
-                  onClick={(e) => { e.stopPropagation(); }}
-                  className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"
-                >
-                  <Volume2 className="h-5 w-5" />
-                </button>
-                <h2 className="text-3xl lg:text-4xl font-bold font-serif text-center mb-4">
-                  {currentCard.indonesian_text}
-                </h2>
-                <p className="text-lg text-white/80 italic">
-                  /{currentCard.pronunciation_guide}/
-                </p>
-                <p className="absolute bottom-6 text-sm text-white/60">Tap to flip</p>
-              </div>
+              <div className={`flip-card-inner ${isFlipped ? 'flipped' : ''}`}>
+                {/* Front Face */}
+                <div className="flip-card-face p-6 flex flex-col items-center justify-center text-white">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      speakIndonesian(currentCard.indonesian_text);
+                    }}
+                    className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors active:scale-95"
+                  >
+                    <Volume2 className="h-5 w-5" />
+                  </button>
+                  <h2 className="text-3xl lg:text-4xl font-bold font-serif text-center mb-4">
+                    {currentCard.indonesian_text}
+                  </h2>
+                  <p className="text-lg text-white/80 italic">
+                    /{currentCard.pronunciation_guide}/
+                  </p>
+                  <p className="absolute bottom-6 text-sm text-white/60">Tap to flip</p>
+                </div>
 
-              {/* Back */}
-              <div
-                className={`absolute inset-0 p-6 flex flex-col text-white overflow-auto transition-opacity duration-300 ${
-                  isFlipped ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                }`}
-              >
-                <h3 className="text-2xl font-bold mb-2">{currentCard.english_translation}</h3>
-                <div className="mt-4 space-y-4">
-                  {currentCard.example_sentence_id && (
-                    <div className="bg-white/10 rounded-xl p-4">
-                      <p className="text-sm text-white/70 mb-1">Example</p>
-                      <p className="font-medium font-serif">{currentCard.example_sentence_id}</p>
-                      {currentCard.example_sentence_en && (
-                        <p className="text-sm text-white/80 mt-1">{currentCard.example_sentence_en}</p>
-                      )}
-                    </div>
-                  )}
-                  {currentCard.cultural_note && (
-                    <div className="bg-white/10 rounded-xl p-4">
-                      <p className="text-sm text-white/70 mb-1">💡 Cultural Context</p>
-                      <p className="text-sm">{currentCard.cultural_note}</p>
-                    </div>
-                  )}
+                {/* Back Face */}
+                <div className="flip-card-face flip-card-back p-6 flex flex-col text-white overflow-auto">
+                  <h3 className="text-2xl font-bold mb-2">{currentCard.english_translation}</h3>
+                  <div className="mt-4 space-y-4">
+                    {currentCard.example_sentence_id && (
+                      <div className="bg-white/10 rounded-xl p-4">
+                        <p className="text-sm text-white/70 mb-1">Example</p>
+                        <p className="font-medium font-serif">{currentCard.example_sentence_id}</p>
+                        {currentCard.example_sentence_en && (
+                          <p className="text-sm text-white/80 mt-1">{currentCard.example_sentence_en}</p>
+                        )}
+                      </div>
+                    )}
+                    {currentCard.cultural_note && (
+                      <div className="bg-white/10 rounded-xl p-4">
+                        <p className="text-sm text-white/70 mb-1">💡 Cultural Context</p>
+                        <p className="text-sm">{currentCard.cultural_note}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

@@ -1,33 +1,15 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Settings, Bell, Volume2, Moon, Globe2, Shield, ChevronRight,
-  Flame, Trophy, BookOpen, MessageCircle, Calendar, Camera,
-  LogOut
+  Bell, Volume2, Moon, Globe2, Shield, ChevronRight,
+  Flame, Trophy, BookOpen, MessageCircle, Calendar,
+  LogOut, Pencil, Check, X
 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
-
-const settingsGroups = [
-  {
-    title: 'Preferences',
-    items: [
-      { icon: Bell, label: 'Notifications', hasToggle: true },
-      { icon: Volume2, label: 'Sound Effects', hasToggle: true },
-      { icon: Moon, label: 'Dark Mode', hasToggle: true },
-      { icon: Globe2, label: 'Language', value: 'English' },
-    ],
-  },
-  {
-    title: 'Account',
-    items: [
-      { icon: Shield, label: 'Privacy Settings' },
-      { icon: Calendar, label: 'Study Reminder', value: '9:00 AM' },
-    ],
-  },
-];
+import { useTheme } from '@/hooks/useTheme';
 
 export default function ProfilePage() {
   const { signOut } = useAuth();
@@ -40,19 +22,30 @@ export default function ProfilePage() {
     getXPProgress,
     getXPToNextLevel,
     levelTitle,
+    updateProfile,
   } = useProfile();
+  const { isDark, toggleTheme } = useTheme();
 
   const [settings, setSettings] = useState({
     notifications: true,
     sound: true,
-    darkMode: false,
   });
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState('');
 
   const displayName = profile?.display_name || 'Learner';
   const level = getLevel();
   const xp = profile?.xp_total || 0;
   const xpToNext = getXPToNextLevel();
   const levelProgress = getXPProgress();
+
+  const handleSaveName = async () => {
+    const trimmed = nameInput.trim();
+    if (trimmed && trimmed !== displayName) {
+      await updateProfile({ display_name: trimmed });
+    }
+    setEditingName(false);
+  };
 
   if (loading) {
     return (
@@ -79,6 +72,37 @@ export default function ProfilePage() {
     { icon: Trophy, label: 'XP Total', value: xp, color: 'text-xp' },
   ];
 
+  const settingsItems = [
+    {
+      title: 'Preferences',
+      items: [
+        {
+          icon: Bell, label: 'Notifications',
+          toggled: settings.notifications,
+          onToggle: () => setSettings(s => ({ ...s, notifications: !s.notifications })),
+        },
+        {
+          icon: Volume2, label: 'Sound Effects',
+          toggled: settings.sound,
+          onToggle: () => setSettings(s => ({ ...s, sound: !s.sound })),
+        },
+        {
+          icon: Moon, label: 'Dark Mode',
+          toggled: isDark,
+          onToggle: toggleTheme,
+        },
+        { icon: Globe2, label: 'Language', value: 'English' },
+      ],
+    },
+    {
+      title: 'Account',
+      items: [
+        { icon: Shield, label: 'Privacy Settings' },
+        { icon: Calendar, label: 'Study Reminder', value: '9:00 AM' },
+      ],
+    },
+  ];
+
   return (
     <div className="min-h-screen p-4 pt-6 lg:p-8">
       <div className="max-w-2xl mx-auto space-y-6">
@@ -89,19 +113,42 @@ export default function ProfilePage() {
           className="card-elevated p-6"
         >
           <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="w-20 h-20 rounded-2xl bg-primary/20 flex items-center justify-center text-primary text-3xl font-bold">
-                {displayName[0]?.toUpperCase() || '?'}
-              </div>
-              <button className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg">
-                <Camera className="h-4 w-4" />
-              </button>
+            <div className="w-20 h-20 rounded-2xl bg-primary/20 flex items-center justify-center text-primary text-3xl font-bold">
+              {displayName[0]?.toUpperCase() || '?'}
             </div>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-foreground">{displayName}</h1>
+              {editingName ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
+                    className="text-xl font-bold text-foreground bg-muted rounded-lg px-3 py-1 w-full outline-none focus:ring-2 focus:ring-primary"
+                    autoFocus
+                    maxLength={30}
+                  />
+                  <button onClick={handleSaveName} className="p-1 text-success hover:bg-success/10 rounded">
+                    <Check className="h-5 w-5" />
+                  </button>
+                  <button onClick={() => setEditingName(false)} className="p-1 text-muted-foreground hover:bg-muted rounded">
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl font-bold text-foreground">{displayName}</h1>
+                  <button
+                    onClick={() => { setNameInput(displayName); setEditingName(true); }}
+                    className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
               <div className="flex items-center gap-2 mt-1">
                 <span className="level-badge">Level {level}</span>
-                <span className="text-muted-foreground">•</span>
+                <span className="text-muted-foreground">·</span>
                 <span className="text-sm text-muted-foreground">{levelTitle}</span>
               </div>
               <div className="mt-3">
@@ -174,7 +221,7 @@ export default function ProfilePage() {
         </motion.div>
 
         {/* Settings */}
-        {settingsGroups.map((group, groupIndex) => (
+        {settingsItems.map((group, groupIndex) => (
           <motion.div
             key={group.title}
             initial={{ opacity: 0, y: 20 }}
@@ -196,22 +243,12 @@ export default function ProfilePage() {
                     <item.icon className="h-5 w-5 text-muted-foreground" />
                     <span className="text-foreground">{item.label}</span>
                   </div>
-                  {item.hasToggle ? (
+                  {'toggled' in item && item.onToggle ? (
                     <Switch
-                      checked={
-                        item.label === 'Notifications' ? settings.notifications :
-                        item.label === 'Sound Effects' ? settings.sound :
-                        settings.darkMode
-                      }
-                      onCheckedChange={(checked) => {
-                        setSettings({
-                          ...settings,
-                          [item.label === 'Notifications' ? 'notifications' :
-                           item.label === 'Sound Effects' ? 'sound' : 'darkMode']: checked,
-                        });
-                      }}
+                      checked={item.toggled}
+                      onCheckedChange={item.onToggle}
                     />
-                  ) : item.value ? (
+                  ) : 'value' in item && item.value ? (
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <span className="text-sm">{item.value}</span>
                       <ChevronRight className="h-4 w-4" />

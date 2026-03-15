@@ -30,6 +30,9 @@
     --gradient-shopping: linear-gradient(135deg, hsl(280, 70%, 55%), hsl(300, 80%, 45%));
     --gradient-emergency: linear-gradient(135deg, hsl(355, 80%, 55%), hsl(340, 85%, 45%));
     --gradient-casual: linear-gradient(135deg, hsl(45, 90%, 55%), hsl(35, 95%, 50%));
+    --gradient-numbers: linear-gradient(135deg, hsl(217, 91%, 60%), hsl(199, 89%, 48%));
+    --gradient-daily-life: linear-gradient(135deg, hsl(174, 72%, 40%), hsl(162, 63%, 45%));
+    --gradient-formal: linear-gradient(135deg, hsl(239, 84%, 67%), hsl(250, 78%, 55%));
     
     /* Background & Surface */
     --background: 210 20% 98%;
@@ -173,7 +176,43 @@
   .splash-card-casual {
     background: var(--gradient-casual);
   }
-  
+
+  .splash-card-numbers {
+    background: var(--gradient-numbers);
+  }
+
+  .splash-card-daily-life {
+    background: var(--gradient-daily-life);
+  }
+
+  .splash-card-formal {
+    background: var(--gradient-formal);
+  }
+
+  /* 3D Flip Card */
+  .flip-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+  }
+
+  .flip-card-inner.flipped {
+    transform: rotateY(180deg);
+  }
+
+  .flip-card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  .flip-card-back {
+    transform: rotateY(180deg);
+  }
+
   /* Button Variants */
   .btn-primary {
     @apply bg-primary text-primary-foreground font-semibold rounded-xl px-6 py-3 shadow-[var(--shadow-md)] transition-all duration-200;

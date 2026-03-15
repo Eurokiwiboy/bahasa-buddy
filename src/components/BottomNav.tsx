@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Home, BookOpen, Dumbbell, Users, User } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 const navItems = [
   { path: '/', label: 'Home', icon: Home },
@@ -12,6 +13,12 @@ const navItems = [
 
 export function BottomNav() {
   const location = useLocation();
+  const { isAuthenticated } = useAuth();
+
+  // Hide on auth pages and when not logged in
+  if (!isAuthenticated || location.pathname === '/auth' || location.pathname === '/login') {
+    return null;
+  }
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 glass border-t border-border safe-bottom lg:hidden">

@@ -13,6 +13,7 @@ import ProfilePage from "@/pages/ProfilePage";
 import NotFound from "@/pages/NotFound";
 import AuthPage from "@/pages/AuthPage";
 import LessonPage from "@/pages/LessonPage";
+import { AuthGuard } from "@/components/AuthGuard";
 
 const queryClient = new QueryClient();
 
@@ -24,15 +25,15 @@ const App = () => (
       <BrowserRouter>
         <Layout>
           <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/learn" element={<LearnPage />} />
-            <Route path="/learn/cards/:categoryId" element={<SplashCardsPage />} />
-            <Route path="/learn/lesson/:lessonId" element={<LessonPage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/login" element={<AuthPage />} />
-            <Route path="/practice" element={<PracticePage />} />
-            <Route path="/community" element={<CommunityPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/" element={<AuthGuard><HomePage /></AuthGuard>} />
+            <Route path="/learn" element={<AuthGuard><LearnPage /></AuthGuard>} />
+            <Route path="/learn/cards/:categoryId" element={<AuthGuard><SplashCardsPage /></AuthGuard>} />
+            <Route path="/learn/lesson/:lessonId" element={<AuthGuard><LessonPage /></AuthGuard>} />
+            <Route path="/practice" element={<AuthGuard><PracticePage /></AuthGuard>} />
+            <Route path="/community" element={<AuthGuard><CommunityPage /></AuthGuard>} />
+            <Route path="/profile" element={<AuthGuard><ProfilePage /></AuthGuard>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>

@@ -12,7 +12,7 @@ import { useLessons } from '@/hooks/useLessons';
 import { useCards } from '@/hooks/useCards';
 
 export default function HomePage() {
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const {
     profile,
     dailyGoals,
@@ -55,21 +55,6 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Redirect to login if not authenticated
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen p-4 pt-6 lg:p-8 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-foreground mb-4">Welcome to Bahasa Buddy</h1>
-          <p className="text-muted-foreground mb-6">Sign in to start learning Indonesian</p>
-          <Link to="/auth">
-            <Button className="btn-primary">Sign In</Button>
-          </Link>
         </div>
       </div>
     );

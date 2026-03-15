@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Zap, Trophy, Target, Flame, CheckCircle2, XCircle, RotateCcw, Loader2 } from 'lucide-react';
+import { ChevronRight, Zap, Trophy, Target, Flame, CheckCircle2, XCircle, RotateCcw, Loader2, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useCards } from '@/hooks/useCards';
@@ -15,6 +15,15 @@ interface QuizQuestion {
   english: string;
   options?: string[];
   correctAnswer: string;
+}
+
+function speakIndonesian(text: string) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'id-ID';
+  utterance.rate = 0.85;
+  window.speechSynthesis.speak(utterance);
 }
 
 export default function PracticePage() {
@@ -287,10 +296,20 @@ export default function PracticePage() {
         className="flex-1 flex flex-col"
       >
         <div className="card-elevated p-6 mb-6">
-          <p className="text-sm text-muted-foreground mb-2">What does this mean?</p>
-          <h2 className="text-3xl font-bold font-serif text-foreground">
-            {question.indonesian}
-          </h2>
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">What does this mean?</p>
+              <h2 className="text-3xl font-bold font-serif text-foreground">
+                {question.indonesian}
+              </h2>
+            </div>
+            <button
+              onClick={() => speakIndonesian(question.indonesian)}
+              className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors active:scale-95 shrink-0 ml-4"
+            >
+              <Volume2 className="h-5 w-5 text-primary" />
+            </button>
+          </div>
         </div>
 
         {/* Options */}

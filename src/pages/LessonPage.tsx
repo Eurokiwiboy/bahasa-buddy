@@ -1,10 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle2, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useLessons } from '@/hooks/useLessons';
+
+function speakIndonesian(text: string) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'id-ID';
+  utterance.rate = 0.85;
+  window.speechSynthesis.speak(utterance);
+}
 
 export default function LessonPage() {
   const { lessonId } = useParams<{ lessonId: string }>();
@@ -132,19 +141,31 @@ export default function LessonPage() {
       </div>
 
       {/* Phrase Card */}
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center" style={{ perspective: '1200px' }}>
         <AnimatePresence mode="wait">
           <motion.div
             key={currentPhrase.id}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            onClick={() => setIsFlipped(!isFlipped)}
             className="w-full max-w-sm cursor-pointer"
           >
-            <div className="card-elevated p-8 text-center min-h-64 flex flex-col items-center justify-center">
-              {!isFlipped ? (
-                <>
+            <div
+              className="card-elevated min-h-64 relative"
+              onClick={() => setIsFlipped(!isFlipped)}
+            >
+              <div className={`flip-card-inner ${isFlipped ? 'flipped' : ''}`} style={{ minHeight: '16rem' }}>
+                {/* Front */}
+                <div className="flip-card-face p-8 flex flex-col items-center justify-center text-center">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      speakIndonesian(currentPhrase.indonesian_text);
+                    }}
+                    className="absolute top-4 right-4 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors active:scale-95"
+                  >
+                    <Volume2 className="h-5 w-5 text-primary" />
+                  </button>
                   <h2 className="text-3xl font-bold font-serif text-foreground mb-4">
                     {currentPhrase.indonesian_text}
                   </h2>
@@ -152,9 +173,10 @@ export default function LessonPage() {
                     /{currentPhrase.pronunciation_guide}/
                   </p>
                   <p className="text-sm text-muted-foreground mt-6">Tap to see translation</p>
-                </>
-              ) : (
-                <>
+                </div>
+
+                {/* Back */}
+                <div className="flip-card-face flip-card-back p-8 flex flex-col items-center justify-center text-center">
                   <p className="text-sm text-muted-foreground mb-2">{currentPhrase.indonesian_text}</p>
                   <h2 className="text-2xl font-bold text-foreground mb-4">
                     {currentPhrase.english_translation}
@@ -165,8 +187,8 @@ export default function LessonPage() {
                       <p className="font-medium text-foreground">{currentPhrase.example_dialogue_id}</p>
                     </div>
                   )}
-                </>
-              )}
+                </div>
+              </div>
             </div>
           </motion.div>
         </AnimatePresence>
