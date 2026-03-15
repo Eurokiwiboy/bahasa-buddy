@@ -1,7 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Home, BookOpen, Dumbbell, Users, User, Flame } from 'lucide-react';
-import { sampleUser } from '@/data/sampleData';
+import { useAuth } from '@/hooks/useAuth';
+import { useProfile } from '@/hooks/useProfile';
 
 const navItems = [
   { path: '/', label: 'Home', icon: Home },
@@ -13,6 +14,13 @@ const navItems = [
 
 export function DesktopSidebar() {
   const location = useLocation();
+  const { user, isAuthenticated } = useAuth();
+  const { profile, loading, getLevel, levelTitle } = useProfile();
+
+  const displayName = profile?.display_name || user?.email?.split('@')[0] || 'Learner';
+  const streak = profile?.current_streak || 0;
+  const xp = profile?.xp_total || 0;
+  const level = getLevel();
 
   return (
     <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 bg-card border-r border-border">
@@ -28,12 +36,14 @@ export function DesktopSidebar() {
       </div>
 
       {/* Streak Banner */}
-      <div className="mx-4 mt-4 p-3 rounded-xl bg-gradient-to-r from-streak/10 to-primary/10">
-        <div className="flex items-center gap-2">
-          <Flame className="h-5 w-5 text-streak animate-fire" />
-          <span className="font-semibold text-foreground">{sampleUser.streak} Day Streak!</span>
+      {streak > 0 && (
+        <div className="mx-4 mt-4 p-3 rounded-xl bg-gradient-to-r from-streak/10 to-primary/10">
+          <div className="flex items-center gap-2">
+            <Flame className="h-5 w-5 text-streak animate-fire" />
+            <span className="font-semibold text-foreground">{streak} Day Streak!</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-6 space-y-1">
@@ -67,20 +77,32 @@ export function DesktopSidebar() {
 
       {/* User Card */}
       <div className="p-4 border-t border-border">
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50">
-          <img
-            src={sampleUser.avatar}
-            alt={sampleUser.name}
-            className="w-10 h-10 rounded-full bg-muted"
-          />
-          <div className="flex-1 min-w-0">
-            <p className="font-medium text-foreground truncate">{sampleUser.name}</p>
-            <p className="text-xs text-muted-foreground">Level {sampleUser.level} • {sampleUser.levelTitle}</p>
+        {isAuthenticated && !loading ? (
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50">
+            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+              {displayName[0]?.toUpperCase() || '?'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-foreground truncate">{displayName}</p>
+              <p className="text-xs text-muted-foreground">Level {level} • {levelTitle}</p>
+            </div>
+            <div className="xp-badge text-xs">
+              {xp} XP
+            </div>
           </div>
-          <div className="xp-badge text-xs">
-            {sampleUser.xp} XP
+        ) : isAuthenticated && loading ? (
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 animate-pulse">
+            <div className="w-10 h-10 rounded-full bg-muted" />
+            <div className="flex-1">
+              <div className="h-4 bg-muted rounded w-20 mb-1" />
+              <div className="h-3 bg-muted rounded w-16" />
+            </div>
           </div>
-        </div>
+        ) : (
+          <Link to="/auth" className="block p-3 rounded-xl bg-primary/10 text-center">
+            <p className="text-sm font-medium text-primary">Sign In</p>
+          </Link>
+        )}
       </div>
     </aside>
   );

@@ -1,20 +1,14 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Settings, Bell, Volume2, Moon, Globe2, Shield, ChevronRight, 
+import {
+  Settings, Bell, Volume2, Moon, Globe2, Shield, ChevronRight,
   Flame, Trophy, BookOpen, MessageCircle, Calendar, Camera,
   LogOut
 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
-import { sampleUser } from '@/data/sampleData';
-
-const stats = [
-  { icon: Flame, label: 'Day Streak', value: sampleUser.streak, color: 'text-streak' },
-  { icon: BookOpen, label: 'Words', value: sampleUser.wordsLearned, color: 'text-primary' },
-  { icon: MessageCircle, label: 'Chat Mins', value: sampleUser.chatMinutes, color: 'text-success' },
-  { icon: Trophy, label: 'XP Total', value: sampleUser.xp, color: 'text-xp' },
-];
+import { useAuth } from '@/hooks/useAuth';
+import { useProfile } from '@/hooks/useProfile';
 
 const settingsGroups = [
   {
@@ -36,12 +30,54 @@ const settingsGroups = [
 ];
 
 export default function ProfilePage() {
-  const levelProgress = (sampleUser.xp / sampleUser.xpToNextLevel) * 100;
+  const { signOut } = useAuth();
+  const {
+    profile,
+    achievements,
+    earnedAchievements,
+    loading,
+    getLevel,
+    getXPProgress,
+    getXPToNextLevel,
+    levelTitle,
+  } = useProfile();
+
   const [settings, setSettings] = useState({
     notifications: true,
     sound: true,
     darkMode: false,
   });
+
+  const displayName = profile?.display_name || 'Learner';
+  const level = getLevel();
+  const xp = profile?.xp_total || 0;
+  const xpToNext = getXPToNextLevel();
+  const levelProgress = getXPProgress();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen p-4 pt-6 lg:p-8">
+        <div className="max-w-2xl mx-auto">
+          <div className="animate-pulse space-y-6">
+            <div className="card-elevated p-6 flex items-center gap-4">
+              <div className="w-20 h-20 rounded-2xl bg-muted" />
+              <div className="flex-1">
+                <div className="h-6 bg-muted rounded w-32 mb-2" />
+                <div className="h-4 bg-muted rounded w-24" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const stats = [
+    { icon: Flame, label: 'Day Streak', value: profile?.current_streak || 0, color: 'text-streak' },
+    { icon: BookOpen, label: 'Level', value: level, color: 'text-primary' },
+    { icon: MessageCircle, label: 'Title', value: levelTitle, color: 'text-success' },
+    { icon: Trophy, label: 'XP Total', value: xp, color: 'text-xp' },
+  ];
 
   return (
     <div className="min-h-screen p-4 pt-6 lg:p-8">
@@ -54,26 +90,24 @@ export default function ProfilePage() {
         >
           <div className="flex items-center gap-4">
             <div className="relative">
-              <img
-                src={sampleUser.avatar}
-                alt={sampleUser.name}
-                className="w-20 h-20 rounded-2xl bg-muted"
-              />
+              <div className="w-20 h-20 rounded-2xl bg-primary/20 flex items-center justify-center text-primary text-3xl font-bold">
+                {displayName[0]?.toUpperCase() || '?'}
+              </div>
               <button className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg">
                 <Camera className="h-4 w-4" />
               </button>
             </div>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-foreground">{sampleUser.name}</h1>
+              <h1 className="text-2xl font-bold text-foreground">{displayName}</h1>
               <div className="flex items-center gap-2 mt-1">
-                <span className="level-badge">Level {sampleUser.level}</span>
+                <span className="level-badge">Level {level}</span>
                 <span className="text-muted-foreground">•</span>
-                <span className="text-sm text-muted-foreground">{sampleUser.levelTitle}</span>
+                <span className="text-sm text-muted-foreground">{levelTitle}</span>
               </div>
               <div className="mt-3">
                 <div className="flex items-center justify-between text-xs mb-1">
                   <span className="text-muted-foreground">Next Level</span>
-                  <span className="font-medium text-foreground">{sampleUser.xp} / {sampleUser.xpToNextLevel} XP</span>
+                  <span className="font-medium text-foreground">{xp} / {xpToNext} XP</span>
                 </div>
                 <Progress value={levelProgress} className="h-2" />
               </div>
@@ -116,25 +150,26 @@ export default function ProfilePage() {
               Achievements
             </h2>
             <span className="text-sm text-muted-foreground">
-              {sampleUser.achievements.filter(a => a.earned).length}/{sampleUser.achievements.length}
+              {earnedAchievements.length}/{achievements.length}
             </span>
           </div>
           <div className="grid grid-cols-4 gap-3">
-            {sampleUser.achievements.map((achievement, index) => (
-              <motion.div
-                key={achievement.id}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.25 + index * 0.03 }}
-                whileHover={{ scale: 1.1 }}
-                className={`achievement-badge ${achievement.earned ? achievement.color : 'bg-muted'} ${
-                  achievement.earned ? 'text-white' : 'text-muted-foreground'
-                } text-xl cursor-pointer`}
-                title={`${achievement.name}: ${achievement.description}`}
-              >
-                {achievement.icon}
-              </motion.div>
-            ))}
+            {achievements.map((achievement, index) => {
+              const isEarned = earnedAchievements.some(e => e.achievement_id === achievement.id);
+              return (
+                <motion.div
+                  key={achievement.id}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.25 + index * 0.03 }}
+                  whileHover={{ scale: 1.1 }}
+                  className={`achievement-badge ${isEarned ? 'bg-primary/20 text-foreground' : 'bg-muted text-muted-foreground'} text-xl cursor-pointer`}
+                  title={`${achievement.name}: ${achievement.description}`}
+                >
+                  {achievement.icon}
+                </motion.div>
+              );
+            })}
           </div>
         </motion.div>
 
@@ -195,6 +230,7 @@ export default function ProfilePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
+          onClick={() => signOut()}
           className="w-full card-elevated p-4 flex items-center justify-center gap-2 text-destructive hover:bg-destructive/10 transition-colors"
         >
           <LogOut className="h-5 w-5" />

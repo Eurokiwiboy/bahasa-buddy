@@ -1,33 +1,53 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-import { ChevronLeft, Volume2, RotateCcw, Check, X, Sparkles } from 'lucide-react';
-import { greetingCards } from '@/data/sampleData';
+import { ChevronLeft, Volume2, Check, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useCards } from '@/hooks/useCards';
 
 export default function SplashCardsPage() {
-  const { categoryId } = useParams();
+  const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
+  const { categories, fetchCardsByCategory, recordCardReview, loading: hooksLoading } = useCards();
+  const [cards, setCards] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [masteredCards, setMasteredCards] = useState<string[]>([]);
   const [reviewCards, setReviewCards] = useState<string[]>([]);
   const [showCelebration, setShowCelebration] = useState(false);
 
-  const cards = greetingCards; // Would filter by categoryId in real app
+  const category = categories.find(c => c.id === categoryId);
+
+  useEffect(() => {
+    if (categoryId) {
+      setLoading(true);
+      fetchCardsByCategory(categoryId).then((data) => {
+        setCards(data);
+        setLoading(false);
+      });
+    }
+  }, [categoryId, fetchCardsByCategory]);
+
   const currentCard = cards[currentIndex];
-  const progress = ((currentIndex + 1) / cards.length) * 100;
 
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-15, 15]);
   const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0.5, 1, 1, 1, 0.5]);
 
-  const handleSwipe = (direction: 'left' | 'right') => {
-    if (direction === 'right') {
-      setMasteredCards([...masteredCards, currentCard.id]);
+  const handleSwipe = async (direction: 'left' | 'right') => {
+    if (!currentCard) return;
+
+    const isCorrect = direction === 'right';
+
+    if (isCorrect) {
+      setMasteredCards(prev => [...prev, currentCard.id]);
     } else {
-      setReviewCards([...reviewCards, currentCard.id]);
+      setReviewCards(prev => [...prev, currentCard.id]);
     }
+
+    // Record the review in Supabase
+    await recordCardReview(currentCard.id, isCorrect);
 
     if (currentIndex < cards.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -37,16 +57,27 @@ export default function SplashCardsPage() {
     }
   };
 
-  const getCategoryClass = () => {
-    switch (categoryId) {
-      case 'food': return 'splash-card-food';
-      case 'travel': return 'splash-card-travel';
-      case 'shopping': return 'splash-card-shopping';
-      case 'emergency': return 'splash-card-emergency';
-      case 'casual': return 'splash-card-casual';
-      default: return 'splash-card-greetings';
-    }
-  };
+  if (loading || hooksLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (cards.length === 0) {
+    return (
+      <div className="min-h-screen p-4 pt-6 lg:p-8 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-foreground mb-2">No Cards Yet</h1>
+          <p className="text-muted-foreground mb-4">
+            {category?.name || 'This category'} doesn't have any cards yet.
+          </p>
+          <Button onClick={() => navigate('/learn')} className="btn-primary">Back to Learn</Button>
+        </div>
+      </div>
+    );
+  }
 
   if (showCelebration) {
     return (
@@ -102,7 +133,7 @@ export default function SplashCardsPage() {
         </button>
         <div className="flex-1">
           <div className="flex gap-1">
-            {cards.slice(0, 10).map((_, i) => (
+            {cards.slice(0, Math.min(cards.length, 10)).map((_, i) => (
               <div
                 key={i}
                 className={`h-1 flex-1 rounded-full transition-colors ${
@@ -118,7 +149,7 @@ export default function SplashCardsPage() {
       </div>
 
       {/* Card Area */}
-      <div className="flex-1 flex items-center justify-center perspective-1000">
+      <div className="flex-1 flex items-center justify-center">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentCard.id}
@@ -137,59 +168,51 @@ export default function SplashCardsPage() {
             className="cursor-pointer w-full max-w-sm"
           >
             <div
-              className={`splash-card ${getCategoryClass()} aspect-[3/4] relative transform-style-3d transition-transform duration-500 ${
-                isFlipped ? 'rotate-y-180' : ''
-              }`}
+              className="splash-card splash-card-greetings aspect-[3/4] relative"
               style={{ transformStyle: 'preserve-3d' }}
             >
-              {/* Front of card */}
+              {/* Front */}
               <div
-                className="absolute inset-0 p-6 flex flex-col items-center justify-center text-white backface-hidden"
-                style={{ backfaceVisibility: 'hidden' }}
+                className={`absolute inset-0 p-6 flex flex-col items-center justify-center text-white transition-opacity duration-300 ${
+                  isFlipped ? 'opacity-0 pointer-events-none' : 'opacity-100'
+                }`}
               >
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // Would play audio here
-                  }}
+                  onClick={(e) => { e.stopPropagation(); }}
                   className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"
                 >
                   <Volume2 className="h-5 w-5" />
                 </button>
-
-                <motion.h2
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  className="text-3xl lg:text-4xl font-bold font-serif text-center mb-4"
-                >
-                  {currentCard.indonesian}
-                </motion.h2>
+                <h2 className="text-3xl lg:text-4xl font-bold font-serif text-center mb-4">
+                  {currentCard.indonesian_text}
+                </h2>
                 <p className="text-lg text-white/80 italic">
-                  /{currentCard.pronunciation}/
+                  /{currentCard.pronunciation_guide}/
                 </p>
-                <p className="absolute bottom-6 text-sm text-white/60">
-                  Tap to flip
-                </p>
+                <p className="absolute bottom-6 text-sm text-white/60">Tap to flip</p>
               </div>
 
-              {/* Back of card */}
+              {/* Back */}
               <div
-                className="absolute inset-0 p-6 flex flex-col text-white backface-hidden rotate-y-180 overflow-auto"
-                style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+                className={`absolute inset-0 p-6 flex flex-col text-white overflow-auto transition-opacity duration-300 ${
+                  isFlipped ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                }`}
               >
-                <h3 className="text-2xl font-bold mb-2">{currentCard.english}</h3>
-                
+                <h3 className="text-2xl font-bold mb-2">{currentCard.english_translation}</h3>
                 <div className="mt-4 space-y-4">
-                  <div className="bg-white/10 rounded-xl p-4">
-                    <p className="text-sm text-white/70 mb-1">Example</p>
-                    <p className="font-medium font-serif">{currentCard.exampleSentence}</p>
-                    <p className="text-sm text-white/80 mt-1">{currentCard.exampleTranslation}</p>
-                  </div>
-                  
-                  {currentCard.culturalContext && (
+                  {currentCard.example_sentence_id && (
+                    <div className="bg-white/10 rounded-xl p-4">
+                      <p className="text-sm text-white/70 mb-1">Example</p>
+                      <p className="font-medium font-serif">{currentCard.example_sentence_id}</p>
+                      {currentCard.example_sentence_en && (
+                        <p className="text-sm text-white/80 mt-1">{currentCard.example_sentence_en}</p>
+                      )}
+                    </div>
+                  )}
+                  {currentCard.cultural_note && (
                     <div className="bg-white/10 rounded-xl p-4">
                       <p className="text-sm text-white/70 mb-1">💡 Cultural Context</p>
-                      <p className="text-sm">{currentCard.culturalContext}</p>
+                      <p className="text-sm">{currentCard.cultural_note}</p>
                     </div>
                   )}
                 </div>

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Zap, Trophy, Target, Flame, CheckCircle2, XCircle, RotateCcw } from 'lucide-react';
+import { ChevronRight, Zap, Trophy, Target, Flame, CheckCircle2, XCircle, RotateCcw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { greetingCards } from '@/data/sampleData';
+import { useCards } from '@/hooks/useCards';
+import { useProfile } from '@/hooks/useProfile';
 
 type QuizType = 'multiple-choice' | 'fill-blank' | 'matching';
 
@@ -16,30 +17,9 @@ interface QuizQuestion {
   correctAnswer: string;
 }
 
-const generateQuestions = (): QuizQuestion[] => {
-  const shuffled = [...greetingCards].sort(() => Math.random() - 0.5).slice(0, 5);
-  
-  return shuffled.map((card, index) => {
-    const wrongOptions = greetingCards
-      .filter(c => c.id !== card.id)
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 3)
-      .map(c => c.english);
-    
-    const options = [...wrongOptions, card.english].sort(() => Math.random() - 0.5);
-    
-    return {
-      id: card.id,
-      type: 'multiple-choice' as QuizType,
-      indonesian: card.indonesian,
-      english: card.english,
-      options,
-      correctAnswer: card.english,
-    };
-  });
-};
-
 export default function PracticePage() {
+  const { cards, loading: cardsLoading } = useCards();
+  const { addXP, dailyGoals, profile, getLevel } = useProfile();
   const [quizStarted, setQuizStarted] = useState(false);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -49,8 +29,36 @@ export default function PracticePage() {
   const [quizComplete, setQuizComplete] = useState(false);
   const [streak, setStreak] = useState(0);
 
+  const generateQuestions = (): QuizQuestion[] => {
+    const available = cards.length > 0 ? cards : [];
+    if (available.length < 4) return [];
+
+    const shuffled = [...available].sort(() => Math.random() - 0.5).slice(0, 5);
+
+    return shuffled.map((card) => {
+      const wrongOptions = available
+        .filter(c => c.id !== card.id)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3)
+        .map(c => c.english_translation);
+
+      const options = [...wrongOptions, card.english_translation].sort(() => Math.random() - 0.5);
+
+      return {
+        id: card.id,
+        type: 'multiple-choice' as QuizType,
+        indonesian: card.indonesian_text,
+        english: card.english_translation,
+        options,
+        correctAnswer: card.english_translation,
+      };
+    });
+  };
+
   const startQuiz = () => {
-    setQuestions(generateQuestions());
+    const q = generateQuestions();
+    if (q.length === 0) return;
+    setQuestions(q);
     setQuizStarted(true);
     setCurrentQuestion(0);
     setScore(0);
@@ -60,16 +68,17 @@ export default function PracticePage() {
     setShowResult(false);
   };
 
-  const handleAnswer = (answer: string) => {
+  const handleAnswer = async (answer: string) => {
     if (showResult) return;
-    
+
     setSelectedAnswer(answer);
     setShowResult(true);
-    
+
     const isCorrect = answer === questions[currentQuestion].correctAnswer;
     if (isCorrect) {
-      setScore(score + 1);
-      setStreak(streak + 1);
+      setScore(prev => prev + 1);
+      setStreak(prev => prev + 1);
+      await addXP(10, 'quiz_correct', 'Correct quiz answer');
     } else {
       setStreak(0);
     }
@@ -87,6 +96,14 @@ export default function PracticePage() {
 
   const progress = quizStarted ? ((currentQuestion + 1) / questions.length) * 100 : 0;
   const xpEarned = score * 10 + (streak >= 3 ? 5 : 0);
+
+  if (cardsLoading) {
+    return (
+      <div className="min-h-screen p-4 pt-6 lg:p-8 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (quizComplete) {
     const percentage = Math.round((score / questions.length) * 100);
@@ -160,9 +177,9 @@ export default function PracticePage() {
             className="grid grid-cols-3 gap-3"
           >
             {[
-              { icon: Zap, label: 'Today', value: '25 XP', color: 'text-xp' },
-              { icon: Trophy, label: 'Best Streak', value: '5', color: 'text-accent' },
-              { icon: Target, label: 'Accuracy', value: '78%', color: 'text-primary' },
+              { icon: Zap, label: 'Today', value: `${dailyGoals?.xp_earned || 0} XP`, color: 'text-xp' },
+              { icon: Trophy, label: 'Level', value: `${getLevel()}`, color: 'text-accent' },
+              { icon: Target, label: 'Cards', value: `${cards.length}`, color: 'text-primary' },
             ].map((stat, i) => (
               <motion.div
                 key={stat.label}

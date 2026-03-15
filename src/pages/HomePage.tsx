@@ -67,7 +67,7 @@ export default function HomePage() {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-foreground mb-4">Welcome to Bahasa Buddy</h1>
           <p className="text-muted-foreground mb-6">Sign in to start learning Indonesian</p>
-          <Link to="/login">
+          <Link to="/auth">
             <Button className="btn-primary">Sign In</Button>
           </Link>
         </div>

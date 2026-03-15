@@ -11,6 +11,8 @@ import PracticePage from "@/pages/PracticePage";
 import CommunityPage from "@/pages/CommunityPage";
 import ProfilePage from "@/pages/ProfilePage";
 import NotFound from "@/pages/NotFound";
+import AuthPage from "@/pages/AuthPage";
+import LessonPage from "@/pages/LessonPage";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +27,9 @@ const App = () => (
             <Route path="/" element={<HomePage />} />
             <Route path="/learn" element={<LearnPage />} />
             <Route path="/learn/cards/:categoryId" element={<SplashCardsPage />} />
+            <Route path="/learn/lesson/:lessonId" element={<LessonPage />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/login" element={<AuthPage />} />
             <Route path="/practice" element={<PracticePage />} />
             <Route path="/community" element={<CommunityPage />} />
             <Route path="/profile" element={<ProfilePage />} />
