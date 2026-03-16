@@ -15,6 +15,7 @@ export function useLessons() {
   const [phrases, setPhrases] = useState<Phrase[]>([]);
   const [lessonProgress, setLessonProgress] = useState<Map<string, UserLessonProgress>>(new Map());
   const [loading, setLoading] = useState(true);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
   // Fetch all lessons
   const fetchLessons = useCallback(async () => {
@@ -169,6 +170,48 @@ export function useLessons() {
     }
   }, [user, lessonProgress]);
 
+  // Record individual exercise answer
+  const recordExerciseAnswer = useCallback(async (
+    lessonId: string,
+    phraseId: string,
+    correct: boolean,
+    exerciseType: string,
+    difficulty: string,
+    questionText: string,
+    correctAnswer: string,
+    userAnswer: string
+  ) => {
+    if (!user) return;
+
+    let sessionId = currentSessionId;
+    if (!sessionId) {
+      const { data: session } = await supabase.from('quiz_sessions').insert({
+        user_id: user.id,
+        quiz_type: 'lesson_quiz',
+      }).select('id').single();
+      sessionId = session?.id ?? null;
+      setCurrentSessionId(sessionId);
+    }
+
+    if (sessionId) {
+      await supabase.from('quiz_answers').insert({
+        session_id: sessionId,
+        phrase_id: phraseId,
+        question_type: exerciseType,
+        question_text: questionText,
+        correct_answer: correctAnswer,
+        user_answer: userAnswer,
+        is_correct: correct,
+      });
+    }
+
+    if (correct) {
+      const xpMap: Record<string, number> = { easy: 5, medium: 10, hard: 15 };
+      const xp = xpMap[difficulty] || 5;
+      await addXP(xp, 'exercise', `${exerciseType} correct`);
+    }
+  }, [user, currentSessionId, addXP]);
+
   // Complete a lesson
   const completeLesson = useCallback(async (lessonId: string, score: number) => {
     if (!user) return;
@@ -200,6 +243,15 @@ export function useLessons() {
         return newMap;
       });
 
+      // Finalize quiz session
+      if (currentSessionId) {
+        await supabase.from('quiz_sessions').update({
+          xp_earned: xpEarned,
+          completed_at: new Date().toISOString(),
+        }).eq('id', currentSessionId);
+        setCurrentSessionId(null);
+      }
+
       // Award XP
       await addXP(xpEarned, 'lesson_complete', `Completed lesson: ${lesson.title}`);
 
@@ -215,7 +267,7 @@ export function useLessons() {
     } catch (err) {
       console.error('Error completing lesson:', err);
     }
-  }, [user, lessons, lessonProgress, addXP, dailyGoals, updateDailyGoals]);
+  }, [user, lessons, lessonProgress, addXP, dailyGoals, updateDailyGoals, currentSessionId]);
 
   // Get lesson progress status
   const getLessonStatus = useCallback((lessonId: string) => {
@@ -268,6 +320,7 @@ export function useLessons() {
     startLesson,
     updatePhraseProgress,
     completeLesson,
+    recordExerciseAnswer,
     getLessonStatus,
     getLessonCompletion,
     getNextLesson,
