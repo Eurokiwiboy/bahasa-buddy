@@ -35,7 +35,7 @@ export default function AuthPage() {
       if (error) {
         setFormError(error.message);
       } else {
-        navigate('/');
+        navigate('/onboarding');
       }
     } else {
       const { error } = await signIn(email, password);

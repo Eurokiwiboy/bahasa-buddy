@@ -16,7 +16,7 @@ export function BottomNav() {
   const { isAuthenticated } = useAuth();
 
   // Hide on auth pages and when not logged in
-  if (!isAuthenticated || location.pathname === '/auth' || location.pathname === '/login') {
+  if (!isAuthenticated || location.pathname === '/auth' || location.pathname === '/login' || location.pathname === '/onboarding') {
     return null;
   }
 

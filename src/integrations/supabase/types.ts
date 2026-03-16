@@ -29,6 +29,7 @@ export type Database = {
           notifications_enabled: boolean
           sound_enabled: boolean
           dark_mode: boolean
+          onboarding_completed: boolean
           created_at: string
           updated_at: string
         }
@@ -48,6 +49,7 @@ export type Database = {
           notifications_enabled?: boolean
           sound_enabled?: boolean
           dark_mode?: boolean
+          onboarding_completed?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -67,6 +69,7 @@ export type Database = {
           notifications_enabled?: boolean
           sound_enabled?: boolean
           dark_mode?: boolean
+          onboarding_completed?: boolean
           updated_at?: string
         }
       }

@@ -11,7 +11,7 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
-  const isAuthPage = location.pathname === '/auth' || location.pathname === '/login';
+  const isAuthPage = location.pathname === '/auth' || location.pathname === '/login' || location.pathname === '/onboarding';
   const showChrome = isAuthenticated && !isAuthPage;
 
   return (

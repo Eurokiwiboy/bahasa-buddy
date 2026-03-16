@@ -13,6 +13,7 @@ import ProfilePage from "@/pages/ProfilePage";
 import NotFound from "@/pages/NotFound";
 import AuthPage from "@/pages/AuthPage";
 import LessonPage from "@/pages/LessonPage";
+import OnboardingPage from "@/pages/OnboardingPage";
 import { AuthGuard } from "@/components/AuthGuard";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/login" element={<AuthPage />} />
+            <Route path="/onboarding" element={<OnboardingPage />} />
             <Route path="/" element={<AuthGuard><HomePage /></AuthGuard>} />
             <Route path="/learn" element={<AuthGuard><LearnPage /></AuthGuard>} />
             <Route path="/learn/cards/:categoryId" element={<AuthGuard><SplashCardsPage /></AuthGuard>} />
