@@ -86,35 +86,44 @@ Achieving independence and nuance in daily communication.
 
 ## 5. Lesson Structure
 
-Each unit contains **4 lessons**, each lesson following a consistent flow:
+Each unit contains **4 lessons**, each lesson following a consistent flow.
 
-1. **Introduce** (receptive) — New vocabulary presented with images, audio, and context sentences. Learner listens and reads. ~8–12 new items per lesson.
-2. **Practice** (guided) — Multiple-choice, matching, and fill-in-the-blank exercises. Scaffolded difficulty.
-3. **Produce** (active) — Translation exercises (English→Indonesian), sentence construction, speaking prompts.
-4. **Review** (spaced) — SM-2 spaced repetition pulls from current and previous lessons. Adaptive difficulty.
+### Lesson format
+
+Each lesson contains **12–15 exercises** and takes **3–5 minutes** to complete (aligned with Duolingo's bite-sized format for daily habit formation). Each lesson begins with a **grammar tip card** — a brief, scrollable explanation of the grammar pattern or vocabulary theme before exercises start (similar to Duolingo's "Tips" and Babbel's inline grammar explanations).
+
+### Exercise flow within a lesson:
+
+1. **Introduce** (receptive) — New vocabulary presented with audio and context. ~8–12 new items per lesson.
+2. **Practice** (guided) — Multiple-choice, matching, and word-bank exercises. Scaffolded difficulty.
+3. **Produce** (active) — Fill-in-the-blank, word ordering, and translation exercises.
+4. **Review** (spaced) — SM-2 spaced repetition pulls from current and previous lessons.
 
 ### Lesson progression within a unit:
 - **Lesson 1:** Core vocabulary + basic phrases
-- **Lesson 2:** Extended vocabulary + grammar pattern
+- **Lesson 2:** Extended vocabulary + grammar pattern (with grammar tip card)
 - **Lesson 3:** Conversational phrases + cultural context
-- **Lesson 4:** Unit review + mini-assessment
+- **Lesson 4:** Unit review + mini-assessment (mixed exercises from lessons 1–3)
 
 ## 6. Exercise Types
 
 Exercises follow a **receptive-first** progression within each lesson:
 
-| Exercise Type | Direction | Difficulty | When Introduced |
-|--------------|-----------|------------|-----------------|
-| `listen_select` | Audio → Select image/word | Easiest | First exposure |
-| `match_pairs` | Indonesian ↔ English pairs | Easy | First exposure |
-| `multiple_choice` | Indonesian → Pick English | Easy | After listen |
-| `multiple_choice_reverse` | English → Pick Indonesian | Medium | After match |
-| `fill_blank` | Sentence with gap | Medium | Mid-lesson |
-| `word_order` | Arrange words into sentence | Medium-Hard | Mid-lesson |
-| `translate_to_id` | English → Type Indonesian | Hard | Late lesson |
-| `translate_to_en` | Indonesian → Type English | Medium-Hard | Late lesson |
-| `listen_type` | Audio → Type what you hear | Hard | Late lesson |
-| `speaking` | Prompt → Speak response | Hardest | End of lesson |
+| Exercise Type | Direction | Difficulty | When Introduced | Phase |
+|--------------|-----------|------------|-----------------|-------|
+| `match_pairs` | Indonesian ↔ English tap pairs | Easy | First exposure | 1 |
+| `multiple_choice` | Indonesian → Pick English | Easy | After match | 1 |
+| `multiple_choice_reverse` | English → Pick Indonesian | Medium | After MC | 1 |
+| `fill_blank` | Sentence with gap | Medium | Mid-lesson | 1 |
+| `word_bank` | Tap words to build sentence | Medium | Mid-lesson | 1 |
+| `listen_select` | Audio → Select image/word | Easy | First exposure | 2 |
+| `word_order` | Arrange scrambled words | Medium-Hard | Mid-lesson | 2 |
+| `translate_to_id` | English → Type Indonesian | Hard | Late lesson | 2 |
+| `translate_to_en` | Indonesian → Type English | Medium-Hard | Late lesson | 2 |
+| `listen_type` | Audio → Type what you hear | Hard | Late lesson | 2 |
+| `speaking` | Prompt → Speak response | Hardest | End of lesson | 3 |
+
+**Note on `word_bank`:** This is Duolingo's most-used scaffold exercise. The learner taps word tiles to assemble a sentence — easier than free typing, harder than multiple choice. This bridges the gap between recognition and production and is critical for Phase 1.
 
 ## 7. Grammar Spiral Map
 
@@ -130,6 +139,23 @@ Grammar concepts are introduced incrementally and revisited across stages:
 | Passive voice (di-) | Unit 15 | Unit 22 | Unit 25 |
 | Formal register (bahasa baku) | Unit 12 | Unit 15 | Unit 23 |
 | Conjunctions & connectors | Unit 13 | Unit 21 | Unit 27 |
+| Question words (apa/siapa/di mana/kapan/mengapa/bagaimana) | Unit 4 | Unit 13 | Unit 22 |
+| Classifiers/measure words (buah, orang, ekor) | Unit 5 | Unit 14 | Unit 26 |
+
+### Indonesian affix system (critical for B1)
+
+Indonesian's affix system (me-, ber-, di-, ter-, pe-, -kan, -i, -an, ke-...-an, per-...-an) is the single most important grammar topic for reaching B1. Following Duolingo Indonesian's approach of dedicating specific attention to affixes, each affix group is introduced within a topical unit and then spiraled:
+
+| Affix Group | Introduced In | Context |
+|------------|---------------|---------|
+| ber- (intransitive verbs) | Unit 12 (Work) | bekerja, berbicara, berjalan |
+| me- (active transitive verbs) | Unit 13 (Making Friends) | menulis, membaca, mendengar |
+| di- (passive voice) | Unit 15 (Banking) | dibayar, dikirim, dibuat |
+| -kan (causative/benefactive) | Unit 17 (Technology) | mengirimkan, memberikan |
+| -i (locative/repetitive) | Unit 21 (Opinions) | mengetahui, mendekati |
+| ter- (accidental/superlative) | Unit 24 (Storytelling) | terjatuh, terbesar |
+| pe-/-an (nominalizer) | Unit 22 (News) | pelajaran, pekerjaan, pendidikan |
+| ke-...-an (abstract nouns) | Unit 27 (Environment) | keindahan, kesehatan, kemerdekaan |
 
 ## 8. Content Volume
 
@@ -143,7 +169,9 @@ Grammar concepts are introduced incrementally and revisited across stages:
 | Total vocabulary items | ~1,200–1,500 |
 | Phrases/sentences per lesson | 10–15 |
 | Total phrases/sentences | ~1,200–1,800 |
-| Exercise types | 10 |
+| Exercise types | 11 |
+| Exercises per lesson | 12–15 |
+| Lesson duration target | 3–5 minutes |
 
 ## 9. Data Model Changes
 
@@ -178,8 +206,8 @@ Add column for exercise type metadata:
 ```sql
 ALTER TABLE phrases ADD COLUMN exercise_type TEXT DEFAULT 'multiple_choice'
   CHECK (exercise_type IN ('listen_select', 'match_pairs', 'multiple_choice',
-    'multiple_choice_reverse', 'fill_blank', 'word_order', 'translate_to_id',
-    'translate_to_en', 'listen_type', 'speaking'));
+    'multiple_choice_reverse', 'fill_blank', 'word_bank', 'word_order',
+    'translate_to_id', 'translate_to_en', 'listen_type', 'speaking'));
 ALTER TABLE phrases ADD COLUMN difficulty_tier TEXT CHECK (difficulty_tier IN ('easy', 'medium', 'hard')) DEFAULT 'easy';
 ALTER TABLE phrases ADD COLUMN grammar_tags TEXT[]; -- e.g., {'negation', 'pronouns'}
 -- NOTE: audio_url and image_url already exist on phrases table; do NOT re-add
@@ -196,7 +224,7 @@ ALTER TABLE quiz_answers DROP CONSTRAINT IF EXISTS quiz_answers_question_type_ch
 ALTER TABLE quiz_answers ADD CONSTRAINT quiz_answers_question_type_check
   CHECK (question_type IN ('multiple_choice', 'typing', 'matching', 'listening',
     'speaking', 'listen_select', 'match_pairs', 'multiple_choice_reverse',
-    'fill_blank', 'word_order', 'translate_to_id', 'translate_to_en', 'listen_type'));
+    'fill_blank', 'word_bank', 'word_order', 'translate_to_id', 'translate_to_en', 'listen_type'));
 ```
 
 ### New: `grammar_concepts` table
@@ -271,20 +299,35 @@ Existing cards and phrases will be re-tagged with the new columns. No data is de
 
 Exercise types map to UI components that need to be built or modified:
 
-| Exercise Type | Component | Status |
-|--------------|-----------|--------|
-| `multiple_choice` | `MultipleChoiceExercise` | Exists (PracticePage) — extract into reusable component |
-| `multiple_choice_reverse` | `MultipleChoiceExercise` | Same component, reversed direction |
-| `listen_select` | `ListenSelectExercise` | New — audio playback + image/word grid |
-| `match_pairs` | `MatchPairsExercise` | New — drag-and-drop or tap matching |
-| `fill_blank` | `FillBlankExercise` | New — sentence with input field |
-| `word_order` | `WordOrderExercise` | New — draggable word tiles |
-| `translate_to_id` | `TranslationExercise` | New — text input with fuzzy matching |
-| `translate_to_en` | `TranslationExercise` | Same component, reversed direction |
-| `listen_type` | `ListenTypeExercise` | New — audio playback + text input |
-| `speaking` | Deferred | Out of scope — requires voice recognition |
+| Exercise Type | Component | Phase | Status |
+|--------------|-----------|-------|--------|
+| `multiple_choice` | `MultipleChoiceExercise` | 1 | Exists (PracticePage) — extract into reusable component |
+| `multiple_choice_reverse` | `MultipleChoiceExercise` | 1 | Same component, reversed direction |
+| `match_pairs` | `MatchPairsExercise` | 1 | New — tap-to-match pairs (Duolingo "tap the pairs") |
+| `fill_blank` | `FillBlankExercise` | 1 | New — sentence with input field |
+| `word_bank` | `WordBankExercise` | 1 | New — tap word tiles to build sentence (core Duolingo mechanic) |
+| `listen_select` | `ListenSelectExercise` | 2 | New — audio playback + word grid |
+| `word_order` | `WordOrderExercise` | 2 | New — drag to reorder scrambled words |
+| `translate_to_id` | `TranslationExercise` | 2 | New — free text input with fuzzy matching |
+| `translate_to_en` | `TranslationExercise` | 2 | Same component, reversed direction |
+| `listen_type` | `ListenTypeExercise` | 2 | New — audio playback + text input |
+| `speaking` | Deferred | 3 | Out of scope — requires voice recognition |
 
-**Implementation phasing:** Phase 1 implements `multiple_choice`, `multiple_choice_reverse`, `fill_blank`, and `match_pairs`. Remaining types are Phase 2.
+**Implementation phasing:** Phase 1 implements 5 exercise types (`multiple_choice`, `multiple_choice_reverse`, `match_pairs`, `fill_blank`, `word_bank`). Phase 2 adds 5 more. Phase 3 (speaking) requires voice recognition integration.
+
+### Grammar tip cards
+
+Each lesson that introduces a new grammar concept includes a **tip card** shown before exercises begin. This is a short, scrollable card with:
+- Grammar rule in plain English (1–3 sentences)
+- 2–3 example sentences with Indonesian + English
+- Visual highlight of the pattern (e.g., bolding the affix in **me**nulis)
+
+This follows both Duolingo's "Tips" feature and Babbel's inline grammar explanations. Stored as a `tip_content` JSONB field on the `lessons` table:
+
+```sql
+ALTER TABLE lessons ADD COLUMN tip_content JSONB;
+-- Format: {"title": "The me- prefix", "explanation": "...", "examples": [...]}
+```
 
 ### TypeScript type regeneration
 
@@ -297,7 +340,8 @@ After schema migration, regenerate Supabase TypeScript types via `npx supabase g
 - Voice recognition for speaking exercises (use TTS playback only for now)
 - Regional dialect variations (stick to standard Bahasa Indonesia)
 - Writing system lessons (Indonesian uses Latin alphabet — no special handling needed)
-- `listen_select`, `word_order`, `translate_to_id/en`, `listen_type`, `speaking` exercise UI components (Phase 2)
+- Phase 2 exercise UI components: `listen_select`, `word_order`, `translate_to_id/en`, `listen_type`
+- Phase 3: `speaking` exercise (requires voice recognition)
 
 ## 14. Success Criteria
 
@@ -306,3 +350,20 @@ After schema migration, regenerate Supabase TypeScript types via `npx supabase g
 - Grammar concepts build naturally through context, not isolated drills
 - SM-2 spaced repetition ensures long-term retention
 - XP/streak/achievement system maintains motivation throughout 120 lessons
+
+## 15. Competitive Analysis & Design Rationale
+
+Design decisions validated against Duolingo and Babbel:
+
+| Feature | Duolingo | Babbel | Bahasa Buddy |
+|---------|----------|--------|-------------|
+| Lesson length | 3–4 min (~15 exercises) | 10–15 min | 3–5 min (12–15 exercises) — follows Duolingo for habit formation |
+| CEFR target | A2 (Indonesian) | A1–C1 | A1–B1 — exceeds Duolingo's Indonesian, practical for expats |
+| Unit count | 69 (Indonesian) | Varies by language | 30 — fewer but deeper units |
+| Grammar approach | Mixed topic + grammar units | Inline tips + exercises | Topic-based with grammar spiraling + tip cards |
+| Core exercise types | ~8 (tap pairs, word bank, translate, listen, speak, MC, fill blank, match) | ~5 (fill blank, MC, speaking, listening, matching) | 11 types across 3 phases |
+| Spaced repetition | Built into path ordering | 6-tier review manager | SM-2 algorithm (industry standard) |
+| Indonesian affixes | Dedicated units (me-, ber-, di-, ter-) | N/A (no Indonesian) | Spiraled within topic units + affix-specific grammar tips |
+| Word bank exercise | Core mechanic, heavily used | Not used | Phase 1 — critical scaffold between recognition and production |
+| Grammar tips | "Tips" section before lessons | Inline explanations | Tip cards with examples before grammar-focused lessons |
+| Unlocking | Strictly sequential | Unlocked (skip freely) | Sequential with 80% gate — balances structure with pacing |
