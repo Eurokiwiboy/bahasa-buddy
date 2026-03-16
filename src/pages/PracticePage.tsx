@@ -1,21 +1,12 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Zap, Trophy, Target, Flame, CheckCircle2, XCircle, RotateCcw, Loader2, Volume2 } from 'lucide-react';
+import { Zap, Trophy, Target, Flame, RotateCcw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useCards } from '@/hooks/useCards';
 import { useProfile } from '@/hooks/useProfile';
-
-type QuizType = 'multiple-choice' | 'fill-blank' | 'matching';
-
-interface QuizQuestion {
-  id: string;
-  type: QuizType;
-  indonesian: string;
-  english: string;
-  options?: string[];
-  correctAnswer: string;
-}
+import { ExerciseShell } from '@/components/exercises';
+import MultipleChoiceExercise from '@/components/exercises/MultipleChoiceExercise';
 
 function speakIndonesian(text: string) {
   if (!('speechSynthesis' in window)) return;
@@ -26,65 +17,44 @@ function speakIndonesian(text: string) {
   window.speechSynthesis.speak(utterance);
 }
 
+interface QuizCard {
+  id: string;
+  indonesian_text: string;
+  english_translation: string;
+  pronunciation_guide: string | null;
+}
+
 export default function PracticePage() {
   const { cards, loading: cardsLoading } = useCards();
   const { addXP, dailyGoals, profile, getLevel } = useProfile();
   const [quizStarted, setQuizStarted] = useState(false);
-  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [quizCards, setQuizCards] = useState<QuizCard[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [showResult, setShowResult] = useState(false);
+  const [currentResult, setCurrentResult] = useState<boolean | null>(null);
   const [score, setScore] = useState(0);
   const [quizComplete, setQuizComplete] = useState(false);
   const [streak, setStreak] = useState(0);
 
-  const generateQuestions = (): QuizQuestion[] => {
-    const available = cards.length > 0 ? cards : [];
-    if (available.length < 4) return [];
-
-    const shuffled = [...available].sort(() => Math.random() - 0.5).slice(0, 5);
-
-    return shuffled.map((card) => {
-      const wrongOptions = available
-        .filter(c => c.id !== card.id)
-        .sort(() => Math.random() - 0.5)
-        .slice(0, 3)
-        .map(c => c.english_translation);
-
-      const options = [...wrongOptions, card.english_translation].sort(() => Math.random() - 0.5);
-
-      return {
-        id: card.id,
-        type: 'multiple-choice' as QuizType,
-        indonesian: card.indonesian_text,
-        english: card.english_translation,
-        options,
-        correctAnswer: card.english_translation,
-      };
-    });
-  };
-
   const startQuiz = () => {
-    const q = generateQuestions();
-    if (q.length === 0) return;
-    setQuestions(q);
+    if (cards.length < 4) return;
+    const shuffled = [...cards].sort(() => Math.random() - 0.5).slice(0, 5);
+    setQuizCards(shuffled.map(c => ({
+      id: c.id,
+      indonesian_text: c.indonesian_text,
+      english_translation: c.english_translation,
+      pronunciation_guide: c.pronunciation_guide || null,
+    })));
     setQuizStarted(true);
     setCurrentQuestion(0);
     setScore(0);
     setStreak(0);
     setQuizComplete(false);
-    setSelectedAnswer(null);
-    setShowResult(false);
+    setCurrentResult(null);
   };
 
-  const handleAnswer = async (answer: string) => {
-    if (showResult) return;
-
-    setSelectedAnswer(answer);
-    setShowResult(true);
-
-    const isCorrect = answer === questions[currentQuestion].correctAnswer;
-    if (isCorrect) {
+  const handleAnswer = async (correct: boolean, _userAnswer: string) => {
+    setCurrentResult(correct);
+    if (correct) {
       setScore(prev => prev + 1);
       setStreak(prev => prev + 1);
       await addXP(10, 'quiz_correct', 'Correct quiz answer');
@@ -94,16 +64,15 @@ export default function PracticePage() {
   };
 
   const nextQuestion = () => {
-    if (currentQuestion < questions.length - 1) {
+    if (currentQuestion < quizCards.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
-      setSelectedAnswer(null);
-      setShowResult(false);
+      setCurrentResult(null);
     } else {
       setQuizComplete(true);
     }
   };
 
-  const progress = quizStarted ? ((currentQuestion + 1) / questions.length) * 100 : 0;
+  const progress = quizStarted ? ((currentQuestion + 1) / quizCards.length) * 100 : 0;
   const xpEarned = score * 10 + (streak >= 3 ? 5 : 0);
 
   if (cardsLoading) {
@@ -132,13 +101,13 @@ export default function PracticePage() {
           >
             {percentage >= 80 ? '🌟' : percentage >= 60 ? '👍' : '💪'}
           </motion.div>
-          
+
           <h1 className="text-2xl font-bold text-foreground mb-2">Quiz Complete!</h1>
           <p className="text-4xl font-bold text-gradient-primary mb-4">{percentage}%</p>
-          
+
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="bg-muted/50 rounded-xl p-4">
-              <p className="text-2xl font-bold text-foreground">{score}/{questions.length}</p>
+              <p className="text-2xl font-bold text-foreground">{score}/{quizCards.length}</p>
               <p className="text-sm text-muted-foreground">Correct</p>
             </div>
             <div className="bg-gradient-to-br from-xp/20 to-accent/20 rounded-xl p-4">
@@ -146,7 +115,7 @@ export default function PracticePage() {
               <p className="text-sm text-muted-foreground">XP Earned</p>
             </div>
           </div>
-          
+
           <div className="flex gap-3">
             <Button
               onClick={() => setQuizStarted(false)}
@@ -155,7 +124,7 @@ export default function PracticePage() {
             >
               Back
             </Button>
-            <Button onClick={startQuiz} className="flex-1 btn-primary">
+            <Button onClick={startQuiz} className="flex-1">
               <RotateCcw className="h-4 w-4 mr-2" />
               Try Again
             </Button>
@@ -267,8 +236,7 @@ export default function PracticePage() {
     );
   }
 
-  const question = questions[currentQuestion];
-  const isCorrect = selectedAnswer === question.correctAnswer;
+  const card = quizCards[currentQuestion];
 
   return (
     <div className="min-h-screen p-4 pt-6 lg:p-8 flex flex-col">
@@ -276,7 +244,7 @@ export default function PracticePage() {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm text-muted-foreground">
-            Question {currentQuestion + 1} of {questions.length}
+            Question {currentQuestion + 1} of {quizCards.length}
           </span>
           {streak > 0 && (
             <div className="streak-badge text-xs flex items-center gap-1">
@@ -288,102 +256,29 @@ export default function PracticePage() {
         <Progress value={progress} className="h-2" />
       </div>
 
-      {/* Question Card */}
-      <motion.div
-        key={question.id}
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        className="flex-1 flex flex-col"
+      {/* Exercise via shared components */}
+      <ExerciseShell
+        isCorrect={currentResult}
+        correctAnswer={card.english_translation}
+        xpEarned={currentResult === true ? 10 : undefined}
+        onNext={nextQuestion}
+        onPlayAudio={() => speakIndonesian(card.indonesian_text)}
       >
-        <div className="card-elevated p-6 mb-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground mb-2">What does this mean?</p>
-              <h2 className="text-3xl font-bold font-serif text-foreground">
-                {question.indonesian}
-              </h2>
-            </div>
-            <button
-              onClick={() => speakIndonesian(question.indonesian)}
-              className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors active:scale-95 shrink-0 ml-4"
-            >
-              <Volume2 className="h-5 w-5 text-primary" />
-            </button>
-          </div>
-        </div>
-
-        {/* Options */}
-        <div className="space-y-3 flex-1">
-          <AnimatePresence>
-            {question.options?.map((option, index) => {
-              const isSelected = selectedAnswer === option;
-              const isCorrectOption = option === question.correctAnswer;
-              
-              let bgClass = 'bg-card border-border';
-              if (showResult) {
-                if (isCorrectOption) {
-                  bgClass = 'bg-success/10 border-success';
-                } else if (isSelected && !isCorrectOption) {
-                  bgClass = 'bg-destructive/10 border-destructive';
-                }
-              } else if (isSelected) {
-                bgClass = 'bg-primary/10 border-primary';
-              }
-              
-              return (
-                <motion.button
-                  key={option}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  onClick={() => handleAnswer(option)}
-                  disabled={showResult}
-                  className={`w-full p-4 rounded-xl border-2 text-left transition-all ${bgClass} ${
-                    !showResult ? 'hover:border-primary/50' : ''
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-foreground">{option}</span>
-                    {showResult && isCorrectOption && (
-                      <CheckCircle2 className="h-5 w-5 text-success" />
-                    )}
-                    {showResult && isSelected && !isCorrectOption && (
-                      <XCircle className="h-5 w-5 text-destructive" />
-                    )}
-                  </div>
-                </motion.button>
-              );
-            })}
-          </AnimatePresence>
-        </div>
-
-        {/* Feedback & Next */}
-        <AnimatePresence>
-          {showResult && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="mt-4"
-            >
-              <div className={`p-4 rounded-xl mb-4 ${isCorrect ? 'bg-success/10' : 'bg-destructive/10'}`}>
-                <p className={`font-semibold ${isCorrect ? 'text-success' : 'text-destructive'}`}>
-                  {isCorrect ? '🎉 Correct!' : '😅 Not quite!'}
-                </p>
-                {!isCorrect && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    The correct answer is: <span className="font-medium text-foreground">{question.correctAnswer}</span>
-                  </p>
-                )}
-              </div>
-              <Button onClick={nextQuestion} className="w-full btn-primary h-14 text-lg">
-                {currentQuestion < questions.length - 1 ? 'Next Question' : 'See Results'}
-                <ChevronRight className="h-5 w-5 ml-2" />
-              </Button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+        <MultipleChoiceExercise
+          phrase={{
+            id: card.id,
+            indonesian_text: card.indonesian_text,
+            english_translation: card.english_translation,
+            pronunciation_guide: card.pronunciation_guide,
+            exercise_type: 'multiple_choice',
+            difficulty_tier: 'easy',
+          }}
+          allPhrases={quizCards}
+          onAnswer={handleAnswer}
+          onNext={nextQuestion}
+          showResult={currentResult !== null}
+        />
+      </ExerciseShell>
     </div>
   );
 }
