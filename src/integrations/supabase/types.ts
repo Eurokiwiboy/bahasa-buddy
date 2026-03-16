@@ -78,6 +78,12 @@ export type Database = {
           icon: string | null
           color: string
           order_index: number
+          stage: string | null
+          cefr_level: string | null
+          unit_number: number | null
+          unit_description: string | null
+          requires_unit_id: string | null
+          min_completion_percent: number
           created_at: string
         }
         Insert: {
@@ -87,6 +93,12 @@ export type Database = {
           icon?: string | null
           color?: string
           order_index?: number
+          stage?: string | null
+          cefr_level?: string | null
+          unit_number?: number | null
+          unit_description?: string | null
+          requires_unit_id?: string | null
+          min_completion_percent?: number
           created_at?: string
         }
         Update: {
@@ -95,6 +107,12 @@ export type Database = {
           icon?: string | null
           color?: string
           order_index?: number
+          stage?: string | null
+          cefr_level?: string | null
+          unit_number?: number | null
+          unit_description?: string | null
+          requires_unit_id?: string | null
+          min_completion_percent?: number
         }
       }
       splash_cards: {
@@ -193,6 +211,8 @@ export type Database = {
           estimated_minutes: number
           order_index: number
           is_premium: boolean
+          lesson_number: number
+          tip_content: Json | null
           created_at: string
         }
         Insert: {
@@ -205,6 +225,8 @@ export type Database = {
           estimated_minutes?: number
           order_index?: number
           is_premium?: boolean
+          lesson_number?: number
+          tip_content?: Json | null
           created_at?: string
         }
         Update: {
@@ -216,6 +238,8 @@ export type Database = {
           estimated_minutes?: number
           order_index?: number
           is_premium?: boolean
+          lesson_number?: number
+          tip_content?: Json | null
         }
       }
       phrases: {
@@ -231,6 +255,11 @@ export type Database = {
           example_dialogue_en: string | null
           grammar_note: string | null
           order_index: number
+          exercise_type: string
+          difficulty_tier: string | null
+          grammar_tags: string[] | null
+          context_sentence: string | null
+          context_translation: string | null
           created_at: string
         }
         Insert: {
@@ -245,6 +274,11 @@ export type Database = {
           example_dialogue_en?: string | null
           grammar_note?: string | null
           order_index?: number
+          exercise_type?: string
+          difficulty_tier?: string | null
+          grammar_tags?: string[] | null
+          context_sentence?: string | null
+          context_translation?: string | null
           created_at?: string
         }
         Update: {
@@ -257,6 +291,11 @@ export type Database = {
           example_dialogue_en?: string | null
           grammar_note?: string | null
           order_index?: number
+          exercise_type?: string
+          difficulty_tier?: string | null
+          grammar_tags?: string[] | null
+          context_sentence?: string | null
+          context_translation?: string | null
         }
       }
       user_lesson_progress: {
@@ -522,6 +561,102 @@ export type Database = {
         }
         Update: never
       }
+      grammar_concepts: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          description: string | null
+          stage: string | null
+          introduced_in_unit: number | null
+          revisited_in_units: number[] | null
+          examples: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          description?: string | null
+          stage?: string | null
+          introduced_in_unit?: number | null
+          revisited_in_units?: number[] | null
+          examples?: Json | null
+          created_at?: string
+        }
+        Update: {
+          name?: string
+          slug?: string
+          description?: string | null
+          stage?: string | null
+          introduced_in_unit?: number | null
+          revisited_in_units?: number[] | null
+          examples?: Json | null
+        }
+      }
+      quiz_sessions: {
+        Row: {
+          id: string
+          user_id: string
+          quiz_type: string
+          total_questions: number
+          correct_answers: number
+          wrong_answers: number
+          xp_earned: number
+          time_spent_seconds: number
+          started_at: string
+          completed_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          quiz_type: string
+          total_questions?: number
+          correct_answers?: number
+          wrong_answers?: number
+          xp_earned?: number
+          time_spent_seconds?: number
+          started_at?: string
+          completed_at?: string | null
+        }
+        Update: {
+          total_questions?: number
+          correct_answers?: number
+          wrong_answers?: number
+          xp_earned?: number
+          time_spent_seconds?: number
+          completed_at?: string | null
+        }
+      }
+      quiz_answers: {
+        Row: {
+          id: string
+          session_id: string
+          card_id: string | null
+          phrase_id: string | null
+          question_type: string
+          question_text: string | null
+          correct_answer: string
+          user_answer: string | null
+          is_correct: boolean
+          time_spent_ms: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          session_id: string
+          card_id?: string | null
+          phrase_id?: string | null
+          question_type: string
+          question_text?: string | null
+          correct_answer: string
+          user_answer?: string | null
+          is_correct: boolean
+          time_spent_ms?: number
+          created_at?: string
+        }
+        Update: never
+      }
     }
     Views: {
       [_ in never]: never
@@ -563,6 +698,10 @@ export type ChatRoomMember = Database['public']['Tables']['chat_room_members']['
 export type DailyGoals = Database['public']['Tables']['daily_goals']['Row']
 export type Achievement = Database['public']['Tables']['achievements']['Row']
 export type UserAchievement = Database['public']['Tables']['user_achievements']['Row']
+
+export type GrammarConcept = Database['public']['Tables']['grammar_concepts']['Row']
+export type QuizSession = Database['public']['Tables']['quiz_sessions']['Row']
+export type QuizAnswer = Database['public']['Tables']['quiz_answers']['Row']
 
 // Extended types with relations
 export type SplashCardWithCategory = SplashCard & {
