@@ -1,18 +1,50 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Bell, Volume2, Moon, Globe2, Shield, ChevronRight,
   Flame, Trophy, BookOpen, MessageCircle, Calendar,
-  LogOut, Pencil, Check, X
+  LogOut, Pencil, Check, X, Camera, Loader2
 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { useTheme } from '@/hooks/useTheme';
+import { supabase } from '@/integrations/supabase/client';
+import { UserAvatar } from '@/components/UserAvatar';
+import { AchievementCard } from '@/components/AchievementCard';
+
+// Client-side image resize using Canvas API
+async function resizeImage(file: File, maxSize: number): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const canvas = document.createElement('canvas');
+      let { width, height } = img;
+      if (width > height) {
+        if (width > maxSize) { height = (height * maxSize) / width; width = maxSize; }
+      } else {
+        if (height > maxSize) { width = (width * maxSize) / height; height = maxSize; }
+      }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => blob ? resolve(blob) : reject(new Error('Canvas toBlob failed')),
+        'image/webp',
+        0.85
+      );
+    };
+    img.onerror = reject;
+    img.src = objectUrl;
+  });
+}
 
 export default function ProfilePage() {
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const {
     profile,
     achievements,
@@ -32,6 +64,81 @@ export default function ProfilePage() {
   });
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [expandedAchievement, setExpandedAchievement] = useState<string | null>(null);
+  const [achievementProgress, setAchievementProgress] = useState<Record<string, number>>({});
+
+  // Fetch achievement progress data
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchProgress = async () => {
+      const [lessonRes, cardProgressRes] = await Promise.all([
+        supabase
+          .from('user_lesson_progress')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('status', 'completed'),
+        supabase
+          .from('user_card_progress')
+          .select('times_seen, mastery_level')
+          .eq('user_id', user.id),
+      ]);
+
+      const lessonsCompleted = lessonRes.count || 0;
+      const cardsData = cardProgressRes.data || [];
+      const cardsReviewed = cardsData.reduce((sum, c) => sum + (c.times_seen || 0), 0);
+      const cardsMastered = cardsData.filter(c => (c.mastery_level || 0) >= 3).length;
+
+      setAchievementProgress({
+        lessons_completed: lessonsCompleted,
+        cards_reviewed: cardsReviewed,
+        cards_mastered: cardsMastered,
+        streak_days: profile?.current_streak || 0,
+        total_xp: profile?.xp_total || 0,
+      });
+    };
+
+    fetchProgress();
+  }, [user, profile]);
+
+  const getProgress = (requirementType: string): number | null => {
+    return achievementProgress[requirementType] ?? null;
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    const localUrl = URL.createObjectURL(file);
+    setPreviewUrl(localUrl);
+    setUploading(true);
+
+    try {
+      const resized = await resizeImage(file, 400);
+      const filePath = `${user.id}/avatar.webp`;
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, resized, { upsert: true, contentType: 'image/webp' });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      const urlWithCacheBust = `${publicUrl}?t=${Date.now()}`;
+      await updateProfile({ avatar_url: urlWithCacheBust });
+    } catch (err) {
+      console.error('Avatar upload failed:', err);
+      setPreviewUrl(null);
+    } finally {
+      setUploading(false);
+      URL.revokeObjectURL(localUrl);
+    }
+  };
 
   const displayName = profile?.display_name || 'Learner';
   const level = getLevel();
@@ -113,9 +220,32 @@ export default function ProfilePage() {
           className="card-elevated p-6"
         >
           <div className="flex items-center gap-4">
-            <div className="w-20 h-20 rounded-2xl bg-primary/20 flex items-center justify-center text-primary text-3xl font-bold">
-              {displayName[0]?.toUpperCase() || '?'}
-            </div>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="relative group"
+              disabled={uploading}
+            >
+              <UserAvatar
+                avatarUrl={previewUrl || profile?.avatar_url}
+                displayName={displayName}
+                size="lg"
+                className="rounded-2xl"
+              />
+              <div className="absolute inset-0 bg-black/40 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                {uploading ? (
+                  <Loader2 className="h-6 w-6 text-white animate-spin" />
+                ) : (
+                  <Camera className="h-6 w-6 text-white" />
+                )}
+              </div>
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarUpload}
+              className="hidden"
+            />
             <div className="flex-1">
               {editingName ? (
                 <div className="flex items-center gap-2">
@@ -200,21 +330,23 @@ export default function ProfilePage() {
               {earnedAchievements.length}/{achievements.length}
             </span>
           </div>
-          <div className="grid grid-cols-4 gap-3">
-            {achievements.map((achievement, index) => {
-              const isEarned = earnedAchievements.some(e => e.achievement_id === achievement.id);
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+            {achievements.map((achievement) => {
+              const earned = earnedAchievements.find(e => e.achievement_id === achievement.id);
               return (
-                <motion.div
+                <AchievementCard
                   key={achievement.id}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.25 + index * 0.03 }}
-                  whileHover={{ scale: 1.1 }}
-                  className={`achievement-badge ${isEarned ? 'bg-primary/20 text-foreground' : 'bg-muted text-muted-foreground'} text-xl cursor-pointer`}
-                  title={`${achievement.name}: ${achievement.description}`}
-                >
-                  {achievement.icon}
-                </motion.div>
+                  achievement={achievement}
+                  isEarned={!!earned}
+                  earnedAt={earned?.earned_at}
+                  currentProgress={getProgress(achievement.requirement_type)}
+                  isExpanded={expandedAchievement === achievement.id}
+                  onToggle={() =>
+                    setExpandedAchievement(
+                      expandedAchievement === achievement.id ? null : achievement.id
+                    )
+                  }
+                />
               );
             })}
           </div>

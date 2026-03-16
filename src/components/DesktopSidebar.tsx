@@ -4,6 +4,7 @@ import { Home, BookOpen, Dumbbell, Users, User, Flame, Moon, LogOut } from 'luci
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { useTheme } from '@/hooks/useTheme';
+import { UserAvatar } from '@/components/UserAvatar';
 import { Switch } from '@/components/ui/switch';
 import {
   DropdownMenu,
@@ -96,9 +97,7 @@ export function DesktopSidebar() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="w-full flex items-center gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors text-left cursor-pointer">
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-                  {displayName[0]?.toUpperCase() || '?'}
-                </div>
+                <UserAvatar avatarUrl={profile?.avatar_url} displayName={displayName} size="sm" />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-foreground truncate">{displayName}</p>
                   <p className="text-xs text-muted-foreground">Level {level} • {levelTitle}</p>
