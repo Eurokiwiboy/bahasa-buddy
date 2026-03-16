@@ -1,10 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, CheckCircle2, Volume2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useLessons } from '@/hooks/useLessons';
+import { ExerciseRouter, ExerciseShell } from '@/components/exercises';
+import GrammarTipCard from '@/components/GrammarTipCard';
+
+interface TipContent {
+  title: string;
+  explanation: string;
+  examples: Array<{ indonesian: string; english: string; note?: string }>;
+}
 
 function speakIndonesian(text: string) {
   if (!('speechSynthesis' in window)) return;
@@ -13,6 +21,11 @@ function speakIndonesian(text: string) {
   utterance.lang = 'id-ID';
   utterance.rate = 0.85;
   window.speechSynthesis.speak(utterance);
+}
+
+function xpForDifficulty(tier: string | null): number {
+  const map: Record<string, number> = { easy: 5, medium: 10, hard: 15 };
+  return map[tier || 'easy'] || 5;
 }
 
 export default function LessonPage() {
@@ -24,12 +37,14 @@ export default function LessonPage() {
     phrases,
     loading,
     startLesson,
-    updatePhraseProgress,
     completeLesson,
+    recordExerciseAnswer,
   } = useLessons();
 
   const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
-  const [isFlipped, setIsFlipped] = useState(false);
+  const [showTip, setShowTip] = useState(true);
+  const [currentResult, setCurrentResult] = useState<boolean | null>(null);
+  const [score, setScore] = useState(0);
   const [completed, setCompleted] = useState(false);
 
   const lesson = lessons.find(l => l.id === lessonId);
@@ -61,13 +76,37 @@ export default function LessonPage() {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-foreground mb-2">Lesson not found</h1>
           <p className="text-muted-foreground mb-4">This lesson doesn't exist yet.</p>
-          <Button onClick={() => navigate('/learn')} className="btn-primary">Back to Learn</Button>
+          <Button onClick={() => navigate('/learn')}>Back to Learn</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Grammar tip gate
+  if (showTip && currentLesson?.tip_content) {
+    return (
+      <div className="min-h-screen p-4 pt-6 lg:p-8 flex flex-col">
+        <div className="flex items-center gap-4 mb-6">
+          <button
+            onClick={() => navigate('/learn')}
+            className="w-10 h-10 rounded-full bg-muted flex items-center justify-center"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <h2 className="font-semibold text-foreground">{lesson.title}</h2>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <GrammarTipCard
+            tip={currentLesson.tip_content as TipContent}
+            onDismiss={() => setShowTip(false)}
+          />
         </div>
       </div>
     );
   }
 
   if (completed) {
+    const pct = phrases.length > 0 ? Math.round((score / phrases.length) * 100) : 0;
     return (
       <div className="min-h-screen p-4 pt-6 lg:p-8 flex items-center justify-center">
         <motion.div
@@ -85,12 +124,15 @@ export default function LessonPage() {
           </motion.div>
           <h1 className="text-3xl font-bold text-foreground mb-2">Lesson Complete!</h1>
           <p className="text-muted-foreground mb-2">{lesson.title}</p>
-          <p className="text-lg font-semibold text-primary mb-6">+{lesson.xp_reward} XP</p>
+          <p className="text-lg font-semibold text-primary mb-2">
+            Score: {score}/{phrases.length} ({pct}%)
+          </p>
+          <p className="text-muted-foreground mb-6">+{lesson.xp_reward} XP</p>
           <div className="flex gap-3 justify-center">
             <Button onClick={() => navigate('/learn')} variant="outline" className="rounded-xl">
               Back to Learn
             </Button>
-            <Button onClick={() => navigate('/practice')} className="btn-primary">
+            <Button onClick={() => navigate('/practice')}>
               Practice Now
             </Button>
           </div>
@@ -104,19 +146,36 @@ export default function LessonPage() {
       <div className="min-h-screen p-4 pt-6 lg:p-8 flex items-center justify-center">
         <div className="text-center">
           <p className="text-muted-foreground mb-4">No phrases in this lesson yet.</p>
-          <Button onClick={() => navigate('/learn')} className="btn-primary">Back to Learn</Button>
+          <Button onClick={() => navigate('/learn')}>Back to Learn</Button>
         </div>
       </div>
     );
   }
 
+  const handleAnswer = async (correct: boolean, userAnswer: string) => {
+    setCurrentResult(correct);
+    if (correct) {
+      setScore(s => s + 1);
+    }
+    await recordExerciseAnswer(
+      lesson.id,
+      currentPhrase.id,
+      correct,
+      currentPhrase.exercise_type,
+      currentPhrase.difficulty_tier || 'easy',
+      currentPhrase.indonesian_text,
+      currentPhrase.english_translation,
+      userAnswer
+    );
+  };
+
   const handleNext = async () => {
+    setCurrentResult(null);
     if (currentPhraseIndex < phrases.length - 1) {
       setCurrentPhraseIndex(currentPhraseIndex + 1);
-      setIsFlipped(false);
-      await updatePhraseProgress(lesson.id, currentPhraseIndex + 2);
     } else {
-      await completeLesson(lesson.id, 100);
+      const finalScore = Math.round((score / phrases.length) * 100);
+      await completeLesson(lesson.id, finalScore);
       setCompleted(true);
     }
   };
@@ -135,73 +194,27 @@ export default function LessonPage() {
           <h2 className="font-semibold text-foreground">{lesson.title}</h2>
           <Progress value={progress} className="h-2 mt-2" />
           <p className="text-xs text-muted-foreground mt-1">
-            {currentPhraseIndex + 1} / {phrases.length} phrases
+            {currentPhraseIndex + 1} / {phrases.length}
           </p>
         </div>
       </div>
 
-      {/* Phrase Card */}
-      <div className="flex-1 flex items-center justify-center" style={{ perspective: '1200px' }}>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentPhrase.id}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="w-full max-w-sm cursor-pointer"
-          >
-            <div
-              className="card-elevated min-h-64 relative"
-              onClick={() => setIsFlipped(!isFlipped)}
-            >
-              <div className={`flip-card-inner ${isFlipped ? 'flipped' : ''}`} style={{ minHeight: '16rem' }}>
-                {/* Front */}
-                <div className="flip-card-face p-8 flex flex-col items-center justify-center text-center">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      speakIndonesian(currentPhrase.indonesian_text);
-                    }}
-                    className="absolute top-4 right-4 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors active:scale-95"
-                  >
-                    <Volume2 className="h-5 w-5 text-primary" />
-                  </button>
-                  <h2 className="text-3xl font-bold font-serif text-foreground mb-4">
-                    {currentPhrase.indonesian_text}
-                  </h2>
-                  <p className="text-lg text-muted-foreground italic">
-                    /{currentPhrase.pronunciation_guide}/
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-6">Tap to see translation</p>
-                </div>
-
-                {/* Back */}
-                <div className="flip-card-face flip-card-back p-8 flex flex-col items-center justify-center text-center">
-                  <p className="text-sm text-muted-foreground mb-2">{currentPhrase.indonesian_text}</p>
-                  <h2 className="text-2xl font-bold text-foreground mb-4">
-                    {currentPhrase.english_translation}
-                  </h2>
-                  {currentPhrase.example_dialogue_id && (
-                    <div className="bg-muted/50 rounded-xl p-4 mt-4 w-full text-left">
-                      <p className="text-sm text-muted-foreground mb-1">Example</p>
-                      <p className="font-medium text-foreground">{currentPhrase.example_dialogue_id}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
-      {/* Next Button */}
-      <Button onClick={handleNext} className="w-full h-14 btn-primary text-lg mt-4">
-        {currentPhraseIndex < phrases.length - 1 ? (
-          <>Next Phrase <ChevronRight className="h-5 w-5 ml-2" /></>
-        ) : (
-          <>Complete Lesson <CheckCircle2 className="h-5 w-5 ml-2" /></>
-        )}
-      </Button>
+      {/* Exercise Engine */}
+      <ExerciseShell
+        isCorrect={currentResult}
+        correctAnswer={currentPhrase.english_translation}
+        xpEarned={currentResult === true ? xpForDifficulty(currentPhrase.difficulty_tier) : undefined}
+        onNext={handleNext}
+        onPlayAudio={() => speakIndonesian(currentPhrase.indonesian_text)}
+      >
+        <ExerciseRouter
+          phrase={currentPhrase}
+          allPhrases={phrases}
+          onAnswer={handleAnswer}
+          onNext={handleNext}
+          showResult={currentResult !== null}
+        />
+      </ExerciseShell>
     </div>
   );
 }
