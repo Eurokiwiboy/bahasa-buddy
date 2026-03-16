@@ -55,9 +55,7 @@ export default function AuthPage() {
         className="w-full max-w-sm space-y-6"
       >
         <div className="text-center">
-          <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-primary text-primary-foreground font-bold text-3xl mx-auto mb-4">
-            B
-          </div>
+          <img src="/logo.png" alt="Bahasa Buddy" className="w-16 h-16 mx-auto mb-4 rounded-2xl" />
           <h1 className="text-2xl font-bold text-foreground">
             {isSignUp ? 'Create Account' : 'Welcome Back'}
           </h1>
