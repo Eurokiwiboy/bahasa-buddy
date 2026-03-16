@@ -15,6 +15,7 @@ import AuthPage from "@/pages/AuthPage";
 import LessonPage from "@/pages/LessonPage";
 import OnboardingPage from "@/pages/OnboardingPage";
 import { AuthGuard } from "@/components/AuthGuard";
+import { ClaudeControlPanel } from "@/components/ClaudeControlPanel";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>
+        <ClaudeControlPanel />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

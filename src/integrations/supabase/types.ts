@@ -706,6 +706,54 @@ export type GrammarConcept = Database['public']['Tables']['grammar_concepts']['R
 export type QuizSession = Database['public']['Tables']['quiz_sessions']['Row']
 export type QuizAnswer = Database['public']['Tables']['quiz_answers']['Row']
 
+// Claude Remote Control types (not in generated DB types — added manually)
+export type ClaudeCommandType = 'message' | 'navigate' | 'highlight' | 'exercise' | 'celebrate'
+export type ClaudeCommandStatus = 'pending' | 'executed' | 'dismissed'
+
+export interface ClaudeMessagePayload {
+  text: string
+  tone?: 'neutral' | 'encouraging' | 'corrective' | 'celebratory'
+}
+
+export interface ClaudeNavigatePayload {
+  route: string
+  label?: string
+}
+
+export interface ClaudeHighlightPayload {
+  phrase_id?: string
+  lesson_id?: string
+  text?: string
+}
+
+export interface ClaudeExercisePayload {
+  lesson_id: string
+  phrase_id?: string
+  instruction?: string
+}
+
+export interface ClaudeCelebratePayload {
+  message?: string
+  xp_earned?: number
+}
+
+export type ClaudeCommandPayload =
+  | ClaudeMessagePayload
+  | ClaudeNavigatePayload
+  | ClaudeHighlightPayload
+  | ClaudeExercisePayload
+  | ClaudeCelebratePayload
+
+export interface ClaudeCommand {
+  id: string
+  user_id: string | null
+  command_type: ClaudeCommandType
+  payload: ClaudeCommandPayload
+  status: ClaudeCommandStatus
+  created_at: string
+  expires_at: string
+}
+
 // Extended types with relations
 export type SplashCardWithCategory = SplashCard & {
   categories: Category | null
