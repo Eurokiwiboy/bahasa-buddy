@@ -47,14 +47,17 @@ ALTER TABLE phrases ADD COLUMN IF NOT EXISTS grammar_tags TEXT[];
 ALTER TABLE phrases ADD COLUMN IF NOT EXISTS context_sentence TEXT;
 ALTER TABLE phrases ADD COLUMN IF NOT EXISTS context_translation TEXT;
 
--- 4. Update quiz_answers CHECK constraint
+-- 4. Add question_text column to quiz_answers (used by exercise tracking)
+ALTER TABLE quiz_answers ADD COLUMN IF NOT EXISTS question_text TEXT;
+
+-- 5. Update quiz_answers CHECK constraint
 ALTER TABLE quiz_answers DROP CONSTRAINT IF EXISTS quiz_answers_question_type_check;
 ALTER TABLE quiz_answers ADD CONSTRAINT quiz_answers_question_type_check
   CHECK (question_type IN ('multiple_choice', 'typing', 'matching', 'listening',
     'speaking', 'listen_select', 'match_pairs', 'multiple_choice_reverse',
     'fill_blank', 'word_bank', 'word_order', 'translate_to_id', 'translate_to_en', 'listen_type'));
 
--- 5. Create grammar_concepts table
+-- 6. Create grammar_concepts table
 CREATE TABLE IF NOT EXISTS grammar_concepts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
@@ -69,7 +72,7 @@ CREATE TABLE IF NOT EXISTS grammar_concepts (
 ALTER TABLE grammar_concepts ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "grammar_concepts_public_read" ON grammar_concepts FOR SELECT USING (true);
 
--- 6. Add index for unit lookups
+-- 7. Add index for unit lookups
 CREATE INDEX IF NOT EXISTS idx_categories_unit_number ON categories(unit_number);
 CREATE INDEX IF NOT EXISTS idx_categories_stage ON categories(stage);
 CREATE INDEX IF NOT EXISTS idx_lessons_lesson_number ON lessons(lesson_number);
@@ -532,9 +535,9 @@ quiz_answers: {
     card_id: string | null
     phrase_id: string | null
     question_type: string
-    question_text: string
+    question_text: string | null
     correct_answer: string
-    user_answer: string
+    user_answer: string | null
     is_correct: boolean
     time_spent_ms: number
     created_at: string
@@ -545,9 +548,9 @@ quiz_answers: {
     card_id?: string | null
     phrase_id?: string | null
     question_type: string
-    question_text: string
+    question_text?: string | null
     correct_answer: string
-    user_answer: string
+    user_answer?: string | null
     is_correct: boolean
     time_spent_ms?: number
     created_at?: string
@@ -599,7 +602,7 @@ export interface ExerciseProps {
     id: string;
     indonesian_text: string;
     english_translation: string;
-    pronunciation_guide: string;
+    pronunciation_guide: string | null;
     context_sentence?: string | null;
     context_translation?: string | null;
     exercise_type: string;

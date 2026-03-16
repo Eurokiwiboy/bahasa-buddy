@@ -270,20 +270,20 @@ ALTER TABLE categories ADD COLUMN min_completion_percent INTEGER DEFAULT 80;
 
 ## 11. Existing Content Migration
 
-Current 8 categories and 120 cards map into the new structure:
+Current 8 categories and 120 cards map into the new structure. Family and Work & Business do not exist yet and will be created as new categories for Stage 2.
 
-| Current Category | → New Unit | Stage |
-|-----------------|-----------|-------|
-| Greetings | Unit 1 | Survival |
-| Numbers | Unit 2 | Survival |
-| Food & Drink | Unit 3 | Survival |
-| Transportation | Unit 4 | Survival |
-| Shopping | Unit 5 | Survival |
-| Time & Dates | Unit 6 | Survival |
-| Emergency | Unit 7 | Survival |
-| Family | Unit 11 | Daily Life |
-| Work & Business | Unit 12 | Daily Life |
-| Formal | Unit 23 | Fluency |
+| Current Category | → New Unit | Stage | Status |
+|-----------------|-----------|-------|--------|
+| Greetings | Unit 1 | Survival | Exists |
+| Numbers | Unit 2 | Survival | Exists |
+| Food & Drink | Unit 3 | Survival | Exists |
+| Transportation | Unit 4 | Survival | Exists |
+| Shopping | Unit 5 | Survival | Exists |
+| Time & Dates | Unit 6 | Survival | Exists |
+| Emergency | Unit 7 | Survival | Exists |
+| Family | Unit 11 | Daily Life | To create |
+| Work & Business | Unit 12 | Daily Life | To create |
+| Formal | Unit 23 | Fluency | Exists |
 
 Existing cards and phrases will be re-tagged with the new columns. No data is deleted.
 
