@@ -154,7 +154,7 @@ Add columns to support curriculum structure:
 ```sql
 ALTER TABLE categories ADD COLUMN stage TEXT CHECK (stage IN ('survival', 'daily_life', 'fluency'));
 ALTER TABLE categories ADD COLUMN cefr_level TEXT CHECK (cefr_level IN ('A1', 'A2', 'B1', 'B2', 'C1', 'C2'));
-ALTER TABLE categories ADD COLUMN unit_number INTEGER;
+ALTER TABLE categories ADD COLUMN unit_number INTEGER UNIQUE;
 ALTER TABLE categories ADD COLUMN unit_description TEXT;
 ```
 
@@ -176,13 +176,27 @@ ALTER TABLE lessons ADD COLUMN lesson_number INTEGER DEFAULT 1;
 Add column for exercise type metadata:
 
 ```sql
-ALTER TABLE phrases ADD COLUMN exercise_type TEXT DEFAULT 'multiple_choice';
+ALTER TABLE phrases ADD COLUMN exercise_type TEXT DEFAULT 'multiple_choice'
+  CHECK (exercise_type IN ('listen_select', 'match_pairs', 'multiple_choice',
+    'multiple_choice_reverse', 'fill_blank', 'word_order', 'translate_to_id',
+    'translate_to_en', 'listen_type', 'speaking'));
 ALTER TABLE phrases ADD COLUMN difficulty_tier TEXT CHECK (difficulty_tier IN ('easy', 'medium', 'hard')) DEFAULT 'easy';
 ALTER TABLE phrases ADD COLUMN grammar_tags TEXT[]; -- e.g., {'negation', 'pronouns'}
-ALTER TABLE phrases ADD COLUMN audio_url TEXT; -- for listen exercises
-ALTER TABLE phrases ADD COLUMN image_url TEXT; -- for visual exercises
+-- NOTE: audio_url and image_url already exist on phrases table; do NOT re-add
 ALTER TABLE phrases ADD COLUMN context_sentence TEXT; -- example usage
 ALTER TABLE phrases ADD COLUMN context_translation TEXT; -- English translation of context
+```
+
+### Modified: `quiz_answers` table
+
+Update CHECK constraint to accept new exercise types:
+
+```sql
+ALTER TABLE quiz_answers DROP CONSTRAINT IF EXISTS quiz_answers_question_type_check;
+ALTER TABLE quiz_answers ADD CONSTRAINT quiz_answers_question_type_check
+  CHECK (question_type IN ('multiple_choice', 'typing', 'matching', 'listening',
+    'speaking', 'listen_select', 'match_pairs', 'multiple_choice_reverse',
+    'fill_blank', 'word_order', 'translate_to_id', 'translate_to_en', 'listen_type'));
 ```
 
 ### New: `grammar_concepts` table
@@ -201,19 +215,17 @@ CREATE TABLE grammar_concepts (
   examples JSONB, -- {indonesian, english, explanation}
   created_at TIMESTAMPTZ DEFAULT now()
 );
+ALTER TABLE grammar_concepts ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "grammar_concepts_public_read" ON grammar_concepts FOR SELECT USING (true);
 ```
 
 ### New: `unit_prerequisites` table
 
-Define unlock order:
+Since units unlock strictly sequentially (Unit N+1 requires ≥80% of Unit N), use a simple self-referencing column on `categories` instead of a separate join table:
 
 ```sql
-CREATE TABLE unit_prerequisites (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  unit_id UUID REFERENCES categories(id),
-  prerequisite_unit_id UUID REFERENCES categories(id),
-  min_completion_percent INTEGER DEFAULT 80
-);
+ALTER TABLE categories ADD COLUMN requires_unit_id UUID REFERENCES categories(id);
+ALTER TABLE categories ADD COLUMN min_completion_percent INTEGER DEFAULT 80;
 ```
 
 ## 10. Progression & Unlocking
@@ -221,7 +233,11 @@ CREATE TABLE unit_prerequisites (
 - Units unlock sequentially: Unit N+1 requires ≥80% completion of Unit N
 - Stage transitions (A1→A2, A2→B1) require passing the milestone review unit (Units 10, 20)
 - Each lesson tracks: started, completed, score, time spent
-- XP awards scale with difficulty: easy exercises 5 XP, medium 10 XP, hard 15 XP
+- **XP awards by activity type (unified table):**
+  - Card review (existing, unchanged): 5 XP per correct review
+  - Quiz answer (existing `PracticePage`, unchanged): 10 XP per correct answer
+  - Lesson completion (existing, unchanged): proportional to `xp_reward` field × score
+  - New curriculum exercises: easy 5 XP, medium 10 XP, hard 15 XP
 - Streak bonuses and daily goals remain unchanged
 
 ## 11. Existing Content Migration
@@ -236,20 +252,54 @@ Current 8 categories and 120 cards map into the new structure:
 | Transportation | Unit 4 | Survival |
 | Shopping | Unit 5 | Survival |
 | Time & Dates | Unit 6 | Survival |
+| Emergency | Unit 7 | Survival |
 | Family | Unit 11 | Daily Life |
 | Work & Business | Unit 12 | Daily Life |
+| Formal | Unit 23 | Fluency |
 
 Existing cards and phrases will be re-tagged with the new columns. No data is deleted.
 
-## 12. Out of Scope
+### Content creation scope
+
+- **Existing:** 10 categories → 10 units get partial content (existing 2 lessons each need 2 more lessons added)
+- **New:** 20 units have no content yet and need 4 lessons + vocabulary each
+- **Total new content needed:** ~100 new lessons, ~1,000 new vocabulary items, ~1,000 new phrases
+- Content seeding will be done via SQL seed scripts as part of the implementation plan
+- Content is authored in English↔Indonesian pairs with difficulty tags
+
+## 12. UI Components Required
+
+Exercise types map to UI components that need to be built or modified:
+
+| Exercise Type | Component | Status |
+|--------------|-----------|--------|
+| `multiple_choice` | `MultipleChoiceExercise` | Exists (PracticePage) — extract into reusable component |
+| `multiple_choice_reverse` | `MultipleChoiceExercise` | Same component, reversed direction |
+| `listen_select` | `ListenSelectExercise` | New — audio playback + image/word grid |
+| `match_pairs` | `MatchPairsExercise` | New — drag-and-drop or tap matching |
+| `fill_blank` | `FillBlankExercise` | New — sentence with input field |
+| `word_order` | `WordOrderExercise` | New — draggable word tiles |
+| `translate_to_id` | `TranslationExercise` | New — text input with fuzzy matching |
+| `translate_to_en` | `TranslationExercise` | Same component, reversed direction |
+| `listen_type` | `ListenTypeExercise` | New — audio playback + text input |
+| `speaking` | Deferred | Out of scope — requires voice recognition |
+
+**Implementation phasing:** Phase 1 implements `multiple_choice`, `multiple_choice_reverse`, `fill_blank`, and `match_pairs`. Remaining types are Phase 2.
+
+### TypeScript type regeneration
+
+After schema migration, regenerate Supabase TypeScript types via `npx supabase gen types typescript` to pick up new columns (`grammar_tags TEXT[]`, `exercise_type`, `difficulty_tier`, `context_sentence`, `context_translation`, `stage`, `cefr_level`, `unit_number`). The existing auto-generated types in `src/integrations/supabase/types.ts` must be updated before any code references new columns.
+
+## 13. Out of Scope
 
 - B2/C1/C2 content (future expansion)
 - AI-generated exercises (future — use static content first)
 - Voice recognition for speaking exercises (use TTS playback only for now)
 - Regional dialect variations (stick to standard Bahasa Indonesia)
 - Writing system lessons (Indonesian uses Latin alphabet — no special handling needed)
+- `listen_select`, `word_order`, `translate_to_id/en`, `listen_type`, `speaking` exercise UI components (Phase 2)
 
-## 13. Success Criteria
+## 14. Success Criteria
 
 - User can progress from zero Indonesian to B1 conversational fluency
 - Curriculum covers all practical situations an expat encounters
