@@ -1,6 +1,46 @@
 -- Migration: Enable Row Level Security on all tables
 -- Tier 1: User-Owned Data — users can only access their own rows
 
+-- This migration tightens policies created by the baseline dump. Drop older
+-- permissive or duplicate policies first so fresh database replays are safe.
+DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
+
+DROP POLICY IF EXISTS "Users can view own card progress" ON user_card_progress;
+DROP POLICY IF EXISTS "Users can insert own card progress" ON user_card_progress;
+DROP POLICY IF EXISTS "Users can update own card progress" ON user_card_progress;
+
+DROP POLICY IF EXISTS "Users can view own lesson progress" ON user_lesson_progress;
+DROP POLICY IF EXISTS "Users can insert own lesson progress" ON user_lesson_progress;
+DROP POLICY IF EXISTS "Users can update own lesson progress" ON user_lesson_progress;
+
+DROP POLICY IF EXISTS "Users can view own daily goals" ON daily_goals;
+DROP POLICY IF EXISTS "Users can create own daily goals" ON daily_goals;
+DROP POLICY IF EXISTS "Users can update own daily goals" ON daily_goals;
+
+DROP POLICY IF EXISTS "User achievements are viewable by everyone" ON user_achievements;
+DROP POLICY IF EXISTS "System can grant achievements" ON user_achievements;
+
+DROP POLICY IF EXISTS "Users can create XP transactions" ON xp_transactions;
+DROP POLICY IF EXISTS "Users can view own XP transactions" ON xp_transactions;
+
+DROP POLICY IF EXISTS "Categories are viewable by everyone" ON categories;
+DROP POLICY IF EXISTS "Splash cards are viewable by everyone" ON splash_cards;
+DROP POLICY IF EXISTS "Lessons are viewable by everyone" ON lessons;
+DROP POLICY IF EXISTS "Phrases are viewable by everyone" ON phrases;
+DROP POLICY IF EXISTS "Achievements are viewable by everyone" ON achievements;
+
+DROP POLICY IF EXISTS "Active chat rooms are viewable by everyone" ON chat_rooms;
+DROP POLICY IF EXISTS "Users can view room members" ON chat_room_members;
+DROP POLICY IF EXISTS "Users can join rooms" ON chat_room_members;
+DROP POLICY IF EXISTS "Users can leave rooms" ON chat_room_members;
+DROP POLICY IF EXISTS "Users can view messages in their rooms" ON chat_messages;
+DROP POLICY IF EXISTS "Users can send messages" ON chat_messages;
+DROP POLICY IF EXISTS "Users can edit own messages" ON chat_messages;
+DROP POLICY IF EXISTS "Users can view reactions" ON message_reactions;
+DROP POLICY IF EXISTS "Users can add reactions" ON message_reactions;
+DROP POLICY IF EXISTS "Users can remove own reactions" ON message_reactions;
+
 -- ============================================================
 -- PROFILES
 -- ============================================================

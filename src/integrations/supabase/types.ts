@@ -662,7 +662,16 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_profiles: {
+        Row: {
+          id: string
+          display_name: string | null
+          avatar_url: string | null
+          learning_level: 'beginner' | 'elementary' | 'intermediate' | 'upper_intermediate' | 'advanced'
+        }
+        Insert: never
+        Update: never
+      }
     }
     Functions: {
       add_xp: {
@@ -685,6 +694,7 @@ export type Database = {
 export type Profile = Database['public']['Tables']['profiles']['Row']
 export type ProfileInsert = Database['public']['Tables']['profiles']['Insert']
 export type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
+export type PublicProfile = Database['public']['Views']['public_profiles']['Row']
 
 export type Category = Database['public']['Tables']['categories']['Row']
 export type SplashCard = Database['public']['Tables']['splash_cards']['Row']
@@ -712,7 +722,7 @@ export type SplashCardWithCategory = SplashCard & {
 }
 
 export type ChatMessageWithUser = ChatMessage & {
-  profiles: Profile | null
+  profiles: PublicProfile | null
 }
 
 export type LessonWithCategory = Lesson & {

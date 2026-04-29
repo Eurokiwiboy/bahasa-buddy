@@ -4,21 +4,47 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { ChatRoom, ChatMessage, ChatMessageWithUser, Profile } from '@/integrations/supabase/types';
+import { ChatRoom, ChatMessage, ChatMessageWithUser, PublicProfile } from '@/integrations/supabase/types';
 import { useAuth } from './useAuth';
+
+const toProfileMap = (profiles: PublicProfile[] | null) => {
+  const map = new Map<string, PublicProfile>();
+  (profiles || []).forEach(profile => map.set(profile.id, profile));
+  return map;
+};
 
 export function useChat() {
   const { user } = useAuth();
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [currentRoom, setCurrentRoom] = useState<ChatRoom | null>(null);
   const [messages, setMessages] = useState<ChatMessageWithUser[]>([]);
-  const [activeUsers, setActiveUsers] = useState<Profile[]>([]);
+  const [activeUsers, setActiveUsers] = useState<PublicProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [sendingMessage, setSendingMessage] = useState(false);
   const channelRef = useRef<RealtimeChannel | null>(null);
 
+  const attachPublicProfiles = useCallback(async (messages: ChatMessage[]) => {
+    const userIds = [...new Set(messages.map(message => message.user_id))];
+    if (userIds.length === 0) return messages.map(message => ({ ...message, profiles: null }));
+
+    const { data, error } = await supabase
+      .from('public_profiles')
+      .select('*')
+      .in('id', userIds);
+
+    if (error) throw error;
+
+    const profiles = toProfileMap(data);
+    return messages.map(message => ({
+      ...message,
+      profiles: profiles.get(message.user_id) || null,
+    }));
+  }, []);
+
   // Fetch all chat rooms
   const fetchRooms = useCallback(async () => {
+    setLoading(true);
+
     try {
       const { data, error } = await supabase
         .from('chat_rooms')
@@ -30,6 +56,8 @@ export function useChat() {
       setRooms(data || []);
     } catch (err) {
       console.error('Error fetching rooms:', err);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -38,26 +66,18 @@ export function useChat() {
     try {
       const { data, error } = await supabase
         .from('chat_messages')
-        .select(`
-          *,
-          profiles:user_id (
-            id,
-            display_name,
-            avatar_url,
-            learning_level
-          )
-        `)
+        .select('*')
         .eq('room_id', roomId)
         .eq('is_deleted', false)
         .order('created_at', { ascending: true })
         .limit(100);
 
       if (error) throw error;
-      setMessages(data || []);
+      setMessages(await attachPublicProfiles(data || []));
     } catch (err) {
       console.error('Error fetching messages:', err);
     }
-  }, []);
+  }, [attachPublicProfiles]);
 
   // Subscribe to real-time messages
   const subscribeToRoom = useCallback((roomId: string) => {
@@ -81,20 +101,13 @@ export function useChat() {
           // Fetch the full message with user profile
           const { data } = await supabase
             .from('chat_messages')
-            .select(`
-              *,
-              profiles:user_id (
-                id,
-                display_name,
-                avatar_url,
-                learning_level
-              )
-            `)
+            .select('*')
             .eq('id', payload.new.id)
             .single();
 
           if (data) {
-            setMessages(prev => [...prev, data as ChatMessageWithUser]);
+            const [message] = await attachPublicProfiles([data]);
+            setMessages(prev => [...prev, message]);
           }
         }
       )
@@ -131,7 +144,7 @@ export function useChat() {
       .subscribe();
 
     channelRef.current = channel;
-  }, []);
+  }, [attachPublicProfiles]);
 
   // Join a room
   const joinRoom = useCallback(async (room: ChatRoom) => {
@@ -140,42 +153,50 @@ export function useChat() {
     setLoading(true);
     setCurrentRoom(room);
 
-    // Add user to room members
-    await supabase
-      .from('chat_room_members')
-      .upsert({
-        room_id: room.id,
-        user_id: user.id,
-        last_read_at: new Date().toISOString(),
-      });
+    try {
+      // Add user to room members
+      const { error: memberError } = await supabase
+        .from('chat_room_members')
+        .upsert({
+          room_id: room.id,
+          user_id: user.id,
+          last_read_at: new Date().toISOString(),
+        });
 
-    // Fetch messages and subscribe
-    await fetchMessages(room.id);
-    subscribeToRoom(room.id);
+      if (memberError) throw memberError;
 
-    // Fetch active users in room
-    const { data: members } = await supabase
-      .from('chat_room_members')
-      .select(`
-        profiles:user_id (
-          id,
-          display_name,
-          avatar_url,
-          learning_level
-        )
-      `)
-      .eq('room_id', room.id)
-      .limit(20);
+      // Fetch messages and subscribe
+      await fetchMessages(room.id);
+      subscribeToRoom(room.id);
 
-    if (members) {
-      setActiveUsers(
-        members
-          .map(m => m.profiles)
-          .filter((p): p is Profile => p !== null)
-      );
+      // Fetch active users in room
+      const { data: members, error: membersError } = await supabase
+        .from('chat_room_members')
+        .select('user_id')
+        .eq('room_id', room.id)
+        .limit(20);
+
+      if (membersError) throw membersError;
+
+      const userIds = [...new Set((members || []).map(member => member.user_id))];
+      if (userIds.length === 0) {
+        setActiveUsers([]);
+        return;
+      }
+
+      const { data: profiles, error: profilesError } = await supabase
+        .from('public_profiles')
+        .select('*')
+        .in('id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      setActiveUsers(profiles || []);
+    } catch (err) {
+      console.error('Error joining room:', err);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }, [user, fetchMessages, subscribeToRoom]);
 
   // Leave current room
