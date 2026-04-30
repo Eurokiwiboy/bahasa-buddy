@@ -1,15 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Bell, Volume2, Moon, Globe2, Shield, ChevronRight,
-  Flame, Trophy, BookOpen, MessageCircle, Calendar,
+  Flame, Trophy, BookOpen, MessageCircle,
   LogOut, Pencil, Check, X, Camera, Loader2
 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
-import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
-import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/integrations/supabase/client';
 import { UserAvatar } from '@/components/UserAvatar';
 import { AchievementCard } from '@/components/AchievementCard';
@@ -56,12 +53,7 @@ export default function ProfilePage() {
     levelTitle,
     updateProfile,
   } = useProfile();
-  const { isDark, toggleTheme } = useTheme();
 
-  const [settings, setSettings] = useState({
-    notifications: true,
-    sound: true,
-  });
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -177,37 +169,6 @@ export default function ProfilePage() {
     { icon: BookOpen, label: 'Level', value: level, color: 'text-primary' },
     { icon: MessageCircle, label: 'Title', value: levelTitle, color: 'text-success' },
     { icon: Trophy, label: 'XP Total', value: xp, color: 'text-xp' },
-  ];
-
-  const settingsItems = [
-    {
-      title: 'Preferences',
-      items: [
-        {
-          icon: Bell, label: 'Notifications',
-          toggled: settings.notifications,
-          onToggle: () => setSettings(s => ({ ...s, notifications: !s.notifications })),
-        },
-        {
-          icon: Volume2, label: 'Sound Effects',
-          toggled: settings.sound,
-          onToggle: () => setSettings(s => ({ ...s, sound: !s.sound })),
-        },
-        {
-          icon: Moon, label: 'Dark Mode',
-          toggled: isDark,
-          onToggle: toggleTheme,
-        },
-        { icon: Globe2, label: 'Language', value: 'English' },
-      ],
-    },
-    {
-      title: 'Account',
-      items: [
-        { icon: Shield, label: 'Privacy Settings' },
-        { icon: Calendar, label: 'Study Reminder', value: '9:00 AM' },
-      ],
-    },
   ];
 
   return (
@@ -351,48 +312,6 @@ export default function ProfilePage() {
             })}
           </div>
         </motion.div>
-
-        {/* Settings */}
-        {settingsItems.map((group, groupIndex) => (
-          <motion.div
-            key={group.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 + groupIndex * 0.1 }}
-          className="card-elevated overflow-hidden bg-card/80"
-        >
-            <h2 className="font-semibold text-foreground px-5 pt-5 pb-3">{group.title}</h2>
-            <div className="divide-y divide-border">
-              {group.items.map((item, itemIndex) => (
-                <motion.div
-                  key={item.label}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.35 + groupIndex * 0.1 + itemIndex * 0.05 }}
-                  className="flex items-center justify-between px-5 py-3.5 hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <item.icon className="h-5 w-5 text-muted-foreground" />
-                    <span className="text-foreground">{item.label}</span>
-                  </div>
-                  {'toggled' in item && item.onToggle ? (
-                    <Switch
-                      checked={item.toggled}
-                      onCheckedChange={item.onToggle}
-                    />
-                  ) : 'value' in item && item.value ? (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <span className="text-sm">{item.value}</span>
-                      <ChevronRight className="h-4 w-4" />
-                    </div>
-                  ) : (
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        ))}
 
         {/* Logout */}
         <motion.button

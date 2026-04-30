@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Home, BookOpen, Dumbbell, Users, User, Flame, Moon, LogOut } from 'lucide-react';
+import { Home, BookOpen, Dumbbell, Users, User, Flame, Moon, LogOut, Bell, Volume2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { useTheme } from '@/hooks/useTheme';
@@ -25,7 +25,7 @@ const navItems = [
 export function DesktopSidebar() {
   const location = useLocation();
   const { user, isAuthenticated, signOut } = useAuth();
-  const { profile, loading, getLevel, levelTitle } = useProfile();
+  const { profile, loading, getLevel, levelTitle, updateProfile } = useProfile();
   const navigate = useNavigate();
   const { isDark, toggleTheme } = useTheme();
 
@@ -111,6 +111,32 @@ export function DesktopSidebar() {
               <DropdownMenuItem onClick={() => navigate('/profile')}>
                 <User className="h-4 w-4 mr-2" />
                 View Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={(e) => e.preventDefault()}
+                className="flex items-center justify-between"
+              >
+                <div className="flex items-center">
+                  <Bell className="h-4 w-4 mr-2" />
+                  Notifications
+                </div>
+                <Switch
+                  checked={profile?.notifications_enabled ?? true}
+                  onCheckedChange={(checked) => updateProfile({ notifications_enabled: checked })}
+                />
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={(e) => e.preventDefault()}
+                className="flex items-center justify-between"
+              >
+                <div className="flex items-center">
+                  <Volume2 className="h-4 w-4 mr-2" />
+                  Sound Effects
+                </div>
+                <Switch
+                  checked={profile?.sound_enabled ?? true}
+                  onCheckedChange={(checked) => updateProfile({ sound_enabled: checked })}
+                />
               </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={(e) => e.preventDefault()}

@@ -8,8 +8,13 @@ const readRepoFile = (path: string) =>
 describe('stability regressions', () => {
   const secureRpc = readRepoFile('supabase/migrations/20260315000002_secure_rpc.sql');
   const reconcileMigration = readRepoFile('supabase/migrations/20260429000000_reconcile_rls_and_xp.sql');
+  const staleStreakMigration = readRepoFile('supabase/migrations/20260430000000_reset_stale_streaks.sql');
   const rlsMigration = readRepoFile('supabase/migrations/20260315000001_enable_rls.sql');
   const useChat = readRepoFile('src/hooks/useChat.ts');
+  const useProfile = readRepoFile('src/hooks/useProfile.ts');
+  const splashCardsPage = readRepoFile('src/pages/SplashCardsPage.tsx');
+  const exerciseShell = readRepoFile('src/components/exercises/ExerciseShell.tsx');
+  const multipleChoiceExercise = readRepoFile('src/components/exercises/MultipleChoiceExercise.tsx');
 
   it('keeps add_xp aligned with the profile schema and progress systems', () => {
     for (const migration of [secureRpc, reconcileMigration]) {
@@ -54,5 +59,32 @@ describe('stability regressions', () => {
     expect(useChat).toMatch(/const fetchRooms = useCallback\(async \(\) => \{\s+setLoading\(true\);/);
     expect(useChat).toContain('} finally {');
     expect(useChat).toContain('setLoading(false);');
+  });
+
+  it('normalizes stale streaks and refreshes profile state across mounted views', () => {
+    expect(useProfile).toContain('function normalizeProfile');
+    expect(useProfile).toContain('current_streak: 0');
+    expect(useProfile).toContain('PROFILE_UPDATED_EVENT');
+    expect(useProfile).toContain("table: 'profiles'");
+    expect(useProfile).toContain("table: 'daily_goals'");
+    expect(staleStreakMigration).toContain('last_practice_date < CURRENT_DATE');
+    expect(staleStreakMigration).toContain('current_streak = 0');
+  });
+
+  it('keeps flashcard review controls singular and guarded while adding audio feedback', () => {
+    expect(splashCardsPage).toContain('Practice more');
+    expect(splashCardsPage).toContain('Got it');
+    expect(splashCardsPage).not.toContain('Review Later');
+    expect(splashCardsPage).toContain('isReviewing');
+    expect(splashCardsPage).toContain('playFeedbackTone');
+    expect(splashCardsPage).toContain('currentCard.audio_url');
+    expect(splashCardsPage).toContain('currentCard.example_sentence_id');
+  });
+
+  it('adds Indonesian prompt audio and correctness tones to lessons', () => {
+    expect(exerciseShell).toContain('playFeedbackTone');
+    expect(exerciseShell).toContain('soundEnabled');
+    expect(multipleChoiceExercise).toContain('speakIndonesian(phrase.indonesian_text)');
+    expect(multipleChoiceExercise).toContain('Play Indonesian audio');
   });
 });

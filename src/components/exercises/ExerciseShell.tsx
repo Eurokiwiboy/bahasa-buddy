@@ -1,6 +1,8 @@
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, XCircle, Volume2, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { playFeedbackTone } from '@/lib/audio';
 
 interface ExerciseShellProps {
   children: React.ReactNode;
@@ -9,6 +11,7 @@ interface ExerciseShellProps {
   xpEarned?: number;
   onNext: () => void;
   onPlayAudio?: () => void;
+  soundEnabled?: boolean;
 }
 
 export default function ExerciseShell({
@@ -18,7 +21,14 @@ export default function ExerciseShell({
   xpEarned,
   onNext,
   onPlayAudio,
+  soundEnabled = true,
 }: ExerciseShellProps) {
+  useEffect(() => {
+    if (isCorrect !== null) {
+      playFeedbackTone(isCorrect ? 'correct' : 'incorrect', soundEnabled);
+    }
+  }, [isCorrect, soundEnabled]);
+
   return (
     <div className="flex flex-col flex-1">
       <div className="flex-1 flex items-center justify-center px-4">

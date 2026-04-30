@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { Volume2 } from 'lucide-react';
 import { ExerciseProps } from './types';
+import { speakIndonesian } from '@/lib/audio';
 
 interface MultipleChoiceProps extends ExerciseProps {
   reverse?: boolean;
@@ -53,7 +55,19 @@ export default function MultipleChoiceExercise({
         <p className="text-sm text-muted-foreground">
           {reverse ? 'Translate to Indonesian' : 'What does this mean?'}
         </p>
-        <p className="text-2xl font-bold">{prompt}</p>
+        <div className="flex items-center justify-center gap-2">
+          <p className="text-2xl font-bold">{prompt}</p>
+          {!reverse && (
+            <button
+              type="button"
+              onClick={() => speakIndonesian(phrase.indonesian_text)}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20"
+              aria-label="Play Indonesian audio"
+            >
+              <Volume2 className="h-4 w-4" />
+            </button>
+          )}
+        </div>
         {!reverse && phrase.pronunciation_guide && (
           <p className="text-sm text-muted-foreground italic">
             {phrase.pronunciation_guide}

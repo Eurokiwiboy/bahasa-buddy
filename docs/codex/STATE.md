@@ -7,6 +7,7 @@
 - Full `npm audit` still reports dev-only dependency issues in the test/build toolchain. Production audit is clean after dependency updates.
 - Live database migration and live previous host deploy have not been performed from this workspace.
 - The current cleanup pass still needs full local verification before release.
+- `npm run audit:prod` is blocked in the sandbox without registry access.
 
 ## Decisions
 
@@ -31,6 +32,11 @@
 - Removed retired hosting/tooling traces from app runtime, dependencies, docs, and tracked generated brainstorm artifacts.
 - Made Supabase client configuration env-only.
 - Tightened flashcard review controls, app shell density, profile hierarchy, home next-action loop, and curriculum path review affordances.
+- Normalized stale streaks on profile read and added a corrective migration to reset deployed stale streak rows.
+- Added profile update broadcasts and Supabase realtime subscriptions so XP, daily goals, and profile stats refresh across mounted views without a full page reload.
+- Moved profile preferences into the bottom profile menu and kept the profile page focused on identity, streak, level title, XP, and achievements.
+- Added Indonesian audio playback fallback, flashcard example audio, lesson prompt audio, and short correct/incorrect feedback tones.
+- Recorded the first lexicon/audio direction in `docs/codex/LEXICON_AUDIO_NOTES.md`.
 
 ## Next Useful Work
 

@@ -23,6 +23,39 @@ export const levelTitles: Record<number, string> = {
 // XP required for each level
 export const xpPerLevel = 500;
 
+const PROFILE_UPDATED_EVENT = 'bahasa-buddy:profile-updated';
+
+function todayDateString() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function isStreakStale(lastPracticeDate: string | null) {
+  if (!lastPracticeDate) return true;
+
+  const today = new Date(todayDateString());
+  const lastPractice = new Date(lastPracticeDate);
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+
+  return lastPractice < yesterday;
+}
+
+function normalizeProfile(profile: Profile): Profile {
+  if (!isStreakStale(profile.last_practice_date)) return profile;
+
+  return {
+    ...profile,
+    current_streak: 0,
+    xp_today: profile.last_practice_date === todayDateString() ? profile.xp_today : 0,
+  };
+}
+
+function notifyProfileUpdated() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(PROFILE_UPDATED_EVENT));
+  }
+}
+
 export function useProfile() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -48,7 +81,19 @@ export function useProfile() {
         .single();
 
       if (error) throw error;
-      setProfile(data);
+      const normalized = normalizeProfile(data);
+      setProfile(normalized);
+
+      if (data.current_streak !== normalized.current_streak || data.xp_today !== normalized.xp_today) {
+        await supabase
+          .from('profiles')
+          .update({
+            current_streak: normalized.current_streak,
+            xp_today: normalized.xp_today,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', user.id);
+      }
     } catch (err) {
       console.error('Error fetching profile:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch profile');
@@ -134,6 +179,7 @@ export function useProfile() {
 
       if (error) throw error;
       setProfile(data);
+      notifyProfileUpdated();
       return { data, error: null };
     } catch (err) {
       console.error('Error updating profile:', err);
@@ -155,6 +201,7 @@ export function useProfile() {
 
       if (error) throw error;
       setDailyGoals(data);
+      notifyProfileUpdated();
     } catch (err) {
       console.error('Error updating daily goals:', err);
     }
@@ -177,6 +224,7 @@ export function useProfile() {
       // Refresh profile and daily goals
       await fetchProfile();
       await fetchDailyGoals();
+      notifyProfileUpdated();
     } catch (err) {
       console.error('Error adding XP:', err);
     }
@@ -220,6 +268,48 @@ export function useProfile() {
     } else {
       setLoading(false);
     }
+  }, [user, fetchProfile, fetchDailyGoals, fetchAchievements]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const refresh = () => {
+      fetchProfile();
+      fetchDailyGoals();
+      fetchAchievements();
+    };
+
+    window.addEventListener(PROFILE_UPDATED_EVENT, refresh);
+    window.addEventListener('focus', refresh);
+
+    const channel = supabase
+      .channel(`profile-live-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` },
+        (payload) => {
+          if (payload.new) setProfile(normalizeProfile(payload.new as Profile));
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'daily_goals', filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          if (payload.new) setDailyGoals(payload.new as DailyGoals);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_achievements', filter: `user_id=eq.${user.id}` },
+        refresh
+      )
+      .subscribe();
+
+    return () => {
+      window.removeEventListener(PROFILE_UPDATED_EVENT, refresh);
+      window.removeEventListener('focus', refresh);
+      supabase.removeChannel(channel);
+    };
   }, [user, fetchProfile, fetchDailyGoals, fetchAchievements]);
 
   return {

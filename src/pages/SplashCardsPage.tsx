@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, Volume2, Check, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCards } from '@/hooks/useCards';
+import { useProfile } from '@/hooks/useProfile';
+import { playFeedbackTone, speakIndonesian } from '@/lib/audio';
 
 // Map category names to CSS gradient class suffixes
 const categoryGradientMap: Record<string, string> = {
@@ -17,19 +19,11 @@ const categoryGradientMap: Record<string, string> = {
   'Formal': 'formal',
 };
 
-function speakIndonesian(text: string) {
-  if (!('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'id-ID';
-  utterance.rate = 0.85;
-  window.speechSynthesis.speak(utterance);
-}
-
 export default function SplashCardsPage() {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
   const { categories, fetchCardsByCategory, recordCardReview, loading: hooksLoading } = useCards();
+  const { profile } = useProfile();
   const [cards, setCards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -54,6 +48,16 @@ export default function SplashCardsPage() {
   }, [categoryId, fetchCardsByCategory]);
 
   const currentCard = cards[currentIndex];
+  const soundEnabled = profile?.sound_enabled ?? true;
+
+  const playCardAudio = useCallback((text: string, audioUrl?: string | null) => {
+    if (audioUrl) {
+      new Audio(audioUrl).play().catch(() => speakIndonesian(text));
+      return;
+    }
+
+    speakIndonesian(text);
+  }, []);
 
   const handleSwipe = useCallback(async (direction: 'left' | 'right') => {
     if (!currentCard || isReviewing) return;
@@ -61,6 +65,7 @@ export default function SplashCardsPage() {
     const isCorrect = direction === 'right';
     setIsReviewing(true);
     setSwipeDirection(direction);
+    playFeedbackTone(isCorrect ? 'correct' : 'incorrect', soundEnabled);
 
     if (isCorrect) {
       setMasteredCards(prev => [...prev, currentCard.id]);
@@ -82,7 +87,7 @@ export default function SplashCardsPage() {
         setIsReviewing(false);
       }
     }, 200);
-  }, [currentCard, currentIndex, cards.length, recordCardReview, isReviewing]);
+  }, [currentCard, currentIndex, cards.length, recordCardReview, isReviewing, soundEnabled]);
 
   if (loading || hooksLoading) {
     return (
@@ -210,7 +215,7 @@ export default function SplashCardsPage() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      speakIndonesian(currentCard.indonesian_text);
+                      playCardAudio(currentCard.indonesian_text, currentCard.audio_url);
                     }}
                     className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors active:scale-95"
                   >
@@ -231,7 +236,19 @@ export default function SplashCardsPage() {
                   <div className="mt-4 space-y-4">
                     {currentCard.example_sentence_id && (
                       <div className="bg-white/10 rounded-xl p-4">
-                        <p className="text-sm text-white/70 mb-1">Example</p>
+                        <div className="mb-1 flex items-center justify-between gap-3">
+                          <p className="text-sm text-white/70">Example</p>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              playCardAudio(currentCard.example_sentence_id);
+                            }}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-white transition-colors hover:bg-white/25"
+                            aria-label="Play example sentence"
+                          >
+                            <Volume2 className="h-4 w-4" />
+                          </button>
+                        </div>
                         <p className="font-medium font-serif">{currentCard.example_sentence_id}</p>
                         {currentCard.example_sentence_en && (
                           <p className="text-sm text-white/80 mt-1">{currentCard.example_sentence_en}</p>

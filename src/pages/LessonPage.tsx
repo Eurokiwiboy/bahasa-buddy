@@ -5,22 +5,15 @@ import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useLessons } from '@/hooks/useLessons';
+import { useProfile } from '@/hooks/useProfile';
 import { ExerciseRouter, ExerciseShell } from '@/components/exercises';
 import GrammarTipCard from '@/components/GrammarTipCard';
+import { speakIndonesian } from '@/lib/audio';
 
 interface TipContent {
   title: string;
   explanation: string;
   examples: Array<{ indonesian: string; english: string; note?: string }>;
-}
-
-function speakIndonesian(text: string) {
-  if (!('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'id-ID';
-  utterance.rate = 0.85;
-  window.speechSynthesis.speak(utterance);
 }
 
 function xpForDifficulty(tier: string | null): number {
@@ -41,6 +34,7 @@ export default function LessonPage() {
     completeLesson,
     recordExerciseAnswer,
   } = useLessons();
+  const { profile } = useProfile();
 
   const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
   const [showTip, setShowTip] = useState(true);
@@ -52,6 +46,7 @@ export default function LessonPage() {
   const lesson = lessons.find(l => l.id === lessonId);
   const currentPhrase = phrases[currentPhraseIndex];
   const progress = phrases.length > 0 ? ((currentPhraseIndex + 1) / phrases.length) * 100 : 0;
+  const soundEnabled = profile?.sound_enabled ?? true;
 
   useEffect(() => {
     if (lesson && !currentLesson) {
@@ -215,6 +210,7 @@ export default function LessonPage() {
         xpEarned={currentResult === true ? xpForDifficulty(currentPhrase.difficulty_tier) : undefined}
         onNext={isAdvancing ? () => undefined : handleNext}
         onPlayAudio={() => speakIndonesian(currentPhrase.indonesian_text)}
+        soundEnabled={soundEnabled}
       >
         <ExerciseRouter
           phrase={currentPhrase}
