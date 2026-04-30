@@ -76,10 +76,10 @@
   }
 
   .dark {
-    --background: 222 47% 8%;
+    --background: 222 42% 9%;
     --foreground: 210 20% 98%;
     
-    --card: 222 47% 12%;
+    --card: 222 36% 14%;
     --card-foreground: 210 20% 98%;
     
     --popover: 222 47% 12%;
@@ -91,21 +91,21 @@
     --secondary: 214 50% 30%;
     --secondary-foreground: 0 0% 100%;
     
-    --muted: 222 47% 18%;
+    --muted: 221 30% 19%;
     --muted-foreground: 214 20% 65%;
     
     --accent: 28 88% 60%;
     --accent-foreground: 214 50% 10%;
     
-    --border: 222 47% 20%;
-    --input: 222 47% 20%;
+    --border: 221 28% 24%;
+    --input: 221 28% 24%;
     --ring: 355 82% 56%;
     
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
     
-    --shadow-card: 0 4px 20px -4px rgba(0, 0, 0, 0.4);
-    --shadow-elevated: 0 8px 30px -6px rgba(0, 0, 0, 0.5);
+    --shadow-card: 0 8px 24px -18px rgba(0, 0, 0, 0.55);
+    --shadow-elevated: 0 16px 36px -24px rgba(0, 0, 0, 0.6);
     
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
@@ -137,11 +137,11 @@
 @layer components {
   /* Card Variants */
   .card-elevated {
-    @apply bg-card rounded-2xl shadow-[var(--shadow-card)] border-0;
+    @apply bg-card rounded-xl shadow-[var(--shadow-card)] border border-border/40;
   }
   
   .card-interactive {
-    @apply bg-card rounded-2xl shadow-[var(--shadow-card)] border-0 transition-all duration-300;
+    @apply bg-card rounded-xl shadow-[var(--shadow-card)] border border-border/40 transition-all duration-300;
   }
   
   .card-interactive:hover {

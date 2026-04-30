@@ -3,11 +3,11 @@
 
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Flame, Zap, BookOpen, MessageCircle, Trophy, ChevronRight, Play } from 'lucide-react';
+import { Flame, Zap, BookOpen, MessageCircle, Trophy, ChevronRight, Play, Dumbbell, Target } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { useProfile, levelTitles } from '@/hooks/useProfile';
+import { useProfile } from '@/hooks/useProfile';
 import { useLessons } from '@/hooks/useLessons';
 import { useCards } from '@/hooks/useCards';
 
@@ -20,15 +20,20 @@ export default function HomePage() {
     earnedAchievements,
     loading: profileLoading,
     getLevel,
-    getXPProgress,
     levelTitle,
   } = useProfile();
-  const { getNextLesson, getLessonCompletion } = useLessons();
-  const { categories, getCategoryProgress } = useCards();
+  const { getNextLesson } = useLessons();
+  const { categories, getCategoryProgress, getCardsForReview } = useCards();
 
   const nextLesson = getNextLesson();
+  const dueCards = getCardsForReview();
+  const firstDueCategory = dueCards[0]?.category_id
+    ? categories.find(c => c.id === dueCards[0].category_id)
+    : null;
   const greetingCategory = categories.find(c => c.name === 'Greetings');
   const greetingProgress = greetingCategory ? getCategoryProgress(greetingCategory.id) : 0;
+  const streak = profile?.current_streak || 0;
+  const isStreakMilestone = [3, 7, 14, 30, 50, 100].includes(streak);
 
   // Calculate daily XP progress
   const dailyXPProgress = dailyGoals
@@ -37,6 +42,33 @@ export default function HomePage() {
 
   // Get display name
   const displayName = profile?.display_name || user?.email?.split('@')[0] || 'Learner';
+  const nextAction = nextLesson
+    ? {
+        to: `/learn/lesson/${nextLesson.id}`,
+        eyebrow: 'Next best step',
+        title: nextLesson.title,
+        detail: 'A focused 3-minute lesson keeps the path moving.',
+        icon: BookOpen,
+        cta: 'Start lesson',
+      }
+    : firstDueCategory
+    ? {
+        to: `/learn/cards/${firstDueCategory.id}`,
+        eyebrow: 'Review is ready',
+        title: `${dueCards.length} cards due`,
+        detail: 'Active recall now helps yesterday’s words stick.',
+        icon: Dumbbell,
+        cta: 'Review cards',
+      }
+    : {
+        to: '/practice',
+        eyebrow: 'Keep momentum',
+        title: 'Quick practice',
+        detail: 'A short mixed quiz is enough to protect the habit today.',
+        icon: Target,
+        cta: 'Practice now',
+      };
+  const NextIcon = nextAction.icon;
 
   // Loading state
   if (profileLoading) {
@@ -90,6 +122,50 @@ export default function HomePage() {
           )}
         </motion.div>
 
+        {isStreakMilestone && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-xl border border-streak/20 bg-gradient-to-r from-streak/15 via-primary/10 to-xp/10 p-4"
+          >
+            <div className="flex items-center gap-3">
+              <div className="h-11 w-11 rounded-xl bg-streak/15 flex items-center justify-center">
+                <Flame className="h-6 w-6 text-streak animate-fire" />
+              </div>
+              <div>
+                <p className="font-semibold text-foreground">{streak} day streak milestone</p>
+                <p className="text-sm text-muted-foreground">One quick lesson keeps the run alive.</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Next Action */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+        >
+          <Link to={nextAction.to}>
+            <div className="card-interactive p-5 bg-gradient-to-br from-primary/10 via-card to-accent/10">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-xl bg-primary text-primary-foreground flex items-center justify-center">
+                  <NextIcon className="h-7 w-7" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-primary font-medium mb-1">{nextAction.eyebrow}</p>
+                  <h2 className="font-bold text-foreground truncate">{nextAction.title}</h2>
+                  <p className="text-sm text-muted-foreground mt-1">{nextAction.detail}</p>
+                </div>
+                <div className="hidden sm:flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
+                  {nextAction.cta}
+                  <ChevronRight className="h-4 w-4" />
+                </div>
+              </div>
+            </div>
+          </Link>
+        </motion.div>
+
         {/* Daily XP Goal */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -114,8 +190,8 @@ export default function HomePage() {
           )}
         </motion.div>
 
-        {/* Continue Learning Card */}
-        {greetingCategory && (
+        {/* First Words Card */}
+        {!nextLesson && greetingCategory && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -128,7 +204,7 @@ export default function HomePage() {
                     {greetingCategory.icon || '👋'}
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm text-muted-foreground mb-1">Continue Learning</p>
+                    <p className="text-sm text-muted-foreground mb-1">First words</p>
                     <h3 className="font-semibold text-foreground">{greetingCategory.name}</h3>
                     <div className="flex items-center gap-2 mt-2">
                       <Progress value={greetingProgress} className="h-1.5 flex-1" />
@@ -199,25 +275,28 @@ export default function HomePage() {
           <div className="space-y-3">
             {[
               {
-                label: 'Complete 1 lesson',
+                label: 'Start 3-minute lesson',
                 completed: (dailyGoals?.lessons_completed || 0) >= (dailyGoals?.lessons_target || 1),
                 current: dailyGoals?.lessons_completed || 0,
                 target: dailyGoals?.lessons_target || 1,
                 xp: 20,
+                to: nextLesson ? `/learn/lesson/${nextLesson.id}` : '/learn',
               },
               {
-                label: 'Practice 10 flashcards',
+                label: 'Review due cards',
                 completed: (dailyGoals?.cards_completed || 0) >= (dailyGoals?.cards_target || 10),
                 current: dailyGoals?.cards_completed || 0,
                 target: dailyGoals?.cards_target || 10,
                 xp: 15,
+                to: firstDueCategory ? `/learn/cards/${firstDueCategory.id}` : '/learn',
               },
               {
-                label: 'Chat for 5 minutes',
+                label: 'Finish today’s goal',
                 completed: (dailyGoals?.chat_minutes_completed || 0) >= (dailyGoals?.chat_minutes_target || 5),
                 current: dailyGoals?.chat_minutes_completed || 0,
                 target: dailyGoals?.chat_minutes_target || 5,
                 xp: 10,
+                to: '/community',
               },
             ].map((goal, index) => (
               <motion.div
@@ -248,7 +327,13 @@ export default function HomePage() {
                     </p>
                   )}
                 </div>
-                <span className="xp-badge text-xs">+{goal.xp} XP</span>
+                {goal.completed ? (
+                  <span className="xp-badge text-xs">+{goal.xp} XP</span>
+                ) : (
+                  <Link to={goal.to} className="text-xs font-semibold text-primary">
+                    Go
+                  </Link>
+                )}
               </motion.div>
             ))}
           </div>

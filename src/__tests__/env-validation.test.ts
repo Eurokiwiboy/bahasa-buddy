@@ -18,7 +18,7 @@ describe('Environment variable validation', () => {
       'utf-8'
     );
     expect(envExample).not.toContain('zxmwfvyqrtqtsrfhdvhv');
-    expect(envExample).not.toContain('efpgaasufgsfimakduve');
+    expect(envExample).not.toContain('old-project-ref');
     expect(envExample).not.toMatch(/eyJ[A-Za-z0-9_-]{20,}/);
   });
 

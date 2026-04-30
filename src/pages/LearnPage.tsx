@@ -1,16 +1,22 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Lock, ChevronDown, ChevronRight, Play, Loader2 } from 'lucide-react';
+import { BookOpen, Lock, ChevronDown, ChevronRight, Play, Loader2, Map, Dumbbell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Progress } from '@/components/ui/progress';
 import { useCards } from '@/hooks/useCards';
 import { useLessons } from '@/hooks/useLessons';
 import { useCurriculum } from '@/hooks/useCurriculum';
 
+const stageDescriptions: Record<string, string> = {
+  survival: 'A1 essentials for arriving, ordering, moving around, and getting help.',
+  daily_life: 'A2 routines for work, friends, errands, health, and admin.',
+  fluency: 'B1 practice for opinions, stories, formal Indonesian, and nuance.',
+};
+
 export default function LearnPage() {
   const { categories: cardCategories, loading: cardsLoading, getCategoryProgress } = useCards();
   const { getLessonStatus } = useLessons();
-  const { stages, loading: curriculumLoading } = useCurriculum();
+  const { stages, currentUnit, loading: curriculumLoading } = useCurriculum();
   const [expandedUnit, setExpandedUnit] = useState<string | null>(null);
   const [expandedStage, setExpandedStage] = useState<string>('survival');
 
@@ -40,6 +46,30 @@ export default function LearnPage() {
           <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Learn</h1>
           <p className="text-muted-foreground mt-1">Your Indonesian learning path</p>
         </motion.div>
+
+        {currentUnit && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="card-elevated p-5 bg-gradient-to-br from-primary/10 via-card to-accent/10"
+          >
+            <div className="flex items-start gap-4">
+              <div className="h-12 w-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center">
+                <Map className="h-6 w-6" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-primary">Continue your path</p>
+                <h2 className="font-bold text-foreground mt-1">
+                  Unit {currentUnit.unit_number}: {currentUnit.name}
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {currentUnit.unit_description || 'A short sequence of lessons, review, and active recall.'}
+                </p>
+                <Progress value={currentUnit.completion} className="h-2 mt-3" />
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Splash Card Categories */}
         {cardCategories.length > 0 && (
@@ -84,7 +114,7 @@ export default function LearnPage() {
               const allLocked = stage.units.every((u) => u.locked);
 
               return (
-                <div key={stage.key} className="rounded-2xl border bg-card overflow-hidden">
+                <div key={stage.key} className="rounded-xl border border-border/60 bg-card overflow-hidden">
                   {/* Stage Header */}
                   <button
                     onClick={() => setExpandedStage(isExpanded ? '' : stage.key)}
@@ -95,6 +125,9 @@ export default function LearnPage() {
                         {stage.name}{' '}
                         <span className="text-xs font-normal text-muted-foreground">({stage.cefr})</span>
                       </h3>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {stageDescriptions[stage.key] || 'Structured lessons with review and practice.'}
+                      </p>
                       <Progress value={stageCompletion} className="h-1.5 mt-2" />
                     </div>
                     {allLocked && <Lock className="h-4 w-4 text-muted-foreground" />}
@@ -189,6 +222,19 @@ export default function LearnPage() {
                                     </Link>
                                   );
                                 })}
+                                <Link
+                                  to={`/learn/cards/${unit.id}`}
+                                  className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/20 transition-colors hover:border-primary/50"
+                                >
+                                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <Dumbbell className="h-4 w-4 text-primary" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <p className="font-medium text-foreground text-sm">Targeted review</p>
+                                    <p className="text-xs text-muted-foreground">Practice due cards from this unit.</p>
+                                  </div>
+                                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                </Link>
                               </div>
                             )}
                           </div>

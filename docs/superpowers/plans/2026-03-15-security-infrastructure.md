@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Secure the Bahasa Buddy app by fixing exposed credentials, adding RLS to all 15 database tables, setting up Supabase CLI with migrations, and cleaning up Lovable artifacts.
+**Goal:** Secure the Bahasa Buddy app by fixing exposed credentials, adding RLS to all 15 database tables, setting up Supabase CLI with migrations, and cleaning up previous host artifacts.
 
 **Architecture:** Remove hardcoded Supabase keys from client code and use environment variables. Write RLS policies as SQL migration files. Set up Supabase CLI for schema-as-code workflow. Add guard-rail tests to prevent security regressions.
 
@@ -93,7 +93,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 }
 ```
 
-Also remove the comment about "ignoring Lovable's env vars" if present.
+Also remove the comment about "ignoring previous host's env vars" if present.
 
 - [ ] **Step 3: Verify the app still loads locally**
 
@@ -217,7 +217,7 @@ describe('Environment variable validation', () => {
 
     // Should not contain any real Supabase project refs
     expect(envExample).not.toContain('zxmwfvyqrtqtsrfhdvhv');
-    expect(envExample).not.toContain('efpgaasufgsfimakduve');
+    expect(envExample).not.toContain('old-project-ref');
     // Should not contain any JWT tokens
     expect(envExample).not.toMatch(/eyJ[A-Za-z0-9_-]{20,}/);
   });
@@ -250,12 +250,12 @@ git commit -m "test: add env validation guard-rail tests"
 
 ---
 
-### Task 5: Clean up Lovable references
+### Task 5: Clean up previous host references
 
 **Files:**
 - Modify: `/tmp/bahasa-buddy-main/supabase/config.toml`
 - Delete: `/tmp/bahasa-buddy-main/.env` (from git tracking only — keep local file)
-- Modify: `/tmp/bahasa-buddy-main/src/integrations/supabase/client.ts` (if any Lovable comments remain)
+- Modify: `/tmp/bahasa-buddy-main/src/integrations/supabase/client.ts` (if any previous host comments remain)
 
 - [ ] **Step 1: Update supabase/config.toml**
 
@@ -273,7 +273,7 @@ git rm --cached .env 2>/dev/null || echo ".env was not tracked — skipping"
 
 This removes `.env` from the repo but keeps your local copy. If the file was never tracked, the command will skip gracefully.
 
-- [ ] **Step 2b: Verify no code references old Lovable env variable names**
+- [ ] **Step 2b: Verify no code references old previous host env variable names**
 
 ```bash
 grep -r "VITE_SUPABASE_PROJECT_ID\|VITE_SUPABASE_PUBLISHABLE_KEY" src/ --include="*.ts" --include="*.tsx"
@@ -281,15 +281,15 @@ grep -r "VITE_SUPABASE_PROJECT_ID\|VITE_SUPABASE_PUBLISHABLE_KEY" src/ --include
 
 If any files reference these old variable names (`VITE_SUPABASE_PROJECT_ID` or `VITE_SUPABASE_PUBLISHABLE_KEY`), update them to use `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` respectively.
 
-- [ ] **Step 3: Remove any remaining Lovable comments from client.ts**
+- [ ] **Step 3: Remove any remaining previous host comments from client.ts**
 
-Search for and remove any comments mentioning "Lovable" in `client.ts`.
+Search for and remove any comments mentioning "previous host" in `client.ts`.
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add supabase/config.toml src/integrations/supabase/client.ts
-git commit -m "chore: remove Lovable references, update supabase config to correct project"
+git commit -m "chore: remove previous host references, update supabase config to correct project"
 ```
 
 ---
@@ -314,9 +314,9 @@ VITE_SUPABASE_URL=https://zxmwfvyqrtqtsrfhdvhv.supabase.co
 VITE_SUPABASE_ANON_KEY=<paste-new-key-here>
 ```
 
-- [ ] **Step 4: Update Lovable deployment env vars**
+- [ ] **Step 4: Update previous host deployment env vars**
 
-In Lovable's deployment settings, update the environment variables to use the new key and your project URL.
+In previous host's deployment settings, update the environment variables to use the new key and your project URL.
 
 - [ ] **Step 5: Verify the app works locally and on the deployed site**
 
@@ -324,7 +324,7 @@ In Lovable's deployment settings, update the environment variables to use the ne
 npm run dev
 ```
 
-Check http://localhost:8080 — app should load and auth should work. Then check https://bahasabuddy.lovable.app.
+Check http://localhost:8080 — app should load and auth should work. Then check https://bahasabuddy.example.
 
 ---
 
@@ -346,7 +346,7 @@ Create a temporary file `secrets.txt` (do NOT commit this). To find the old keys
 git log --all -p -- .env src/integrations/supabase/client.ts | grep -oE 'eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+' | sort -u
 ```
 
-Put each unique JWT token on its own line in `secrets.txt`. Also add the Lovable project ref `efpgaasufgsfimakduve` on its own line.
+Put each unique JWT token on its own line in `secrets.txt`. Also add the previous host project ref `old-project-ref` on its own line.
 
 **Note:** Do NOT include `zxmwfvyqrtqtsrfhdvhv` — that's your project ref and is fine to have in config.toml.
 
@@ -869,7 +869,7 @@ Confirm the `realtime` publication includes `chat_messages` (and any other table
 
 - [ ] **Step 5: Functional verification on the live app**
 
-Open https://bahasabuddy.lovable.app and test each tier:
+Open https://bahasabuddy.example and test each tier:
 
 **Tier 1 — User data:**
 - [ ] Sign in works
@@ -948,7 +948,7 @@ npm run test:watch  # Run tests in watch mode
 
 ```bash
 git add README.md
-git commit -m "docs: rewrite README for Bahasa Buddy (replace Lovable template)"
+git commit -m "docs: rewrite README for Bahasa Buddy (replace previous host template)"
 ```
 
 ---
@@ -1061,7 +1061,7 @@ Expected: Build succeeds with no errors.
 
 - [ ] **Step 3: Verify the deployed app**
 
-Check https://bahasabuddy.lovable.app — all features should work:
+Check https://bahasabuddy.example — all features should work:
 - Sign in/out
 - View categories and flashcards
 - Practice quizzes
@@ -1084,7 +1084,7 @@ git push origin main
 | 2 | Remove hardcoded credentials from client.ts | Code | Task 1 |
 | 3 | Guard-rail test: Supabase client | Test | Task 2 |
 | 4 | Guard-rail test: env validation | Test | Task 1 |
-| 5 | Clean up Lovable references | Code | Task 2 |
+| 5 | Clean up previous host references | Code | Task 2 |
 | 6 | **Manual:** Rotate Supabase anon key | Manual | Task 2 |
 | 7 | Scrub git history with BFG | Git | Task 6 |
 | 8 | Install and link Supabase CLI | Setup | None |

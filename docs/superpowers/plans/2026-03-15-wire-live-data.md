@@ -1366,7 +1366,7 @@ git push origin main
 
 - [ ] **Step 5: Manual smoke test on live app**
 
-Verify at `bahasabuddy.lovable.app`:
+Verify at `bahasabuddy.example`:
 1. Sidebar shows real user data (not "Anya, Level 5, 450 XP")
 2. `/learn/lesson/[id]` routes load the lesson page (no 404)
 3. Learn page loads categories from Supabase

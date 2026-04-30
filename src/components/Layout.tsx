@@ -17,7 +17,7 @@ export function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen bg-background">
       {showChrome && <DesktopSidebar />}
-      <main className={showChrome ? 'lg:pl-64 pb-20 lg:pb-0' : ''}>
+      <main className={showChrome ? 'lg:pl-56 pb-20 lg:pb-0' : ''}>
         {children}
       </main>
       <BottomNav />

@@ -35,16 +35,16 @@ export function DesktopSidebar() {
   const level = getLevel();
 
   return (
-    <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 bg-card border-r border-border">
+    <aside className="hidden lg:flex lg:w-56 lg:flex-col lg:fixed lg:inset-y-0 bg-card/95 border-r border-border/70">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-6 py-6 border-b border-border">
+      <div className="flex items-center gap-3 px-4 py-4 border-b border-border/70">
         <img
           src="/logo.png"
           alt="Bahasa Buddy"
-          className="w-10 h-10 rounded-xl object-cover"
+          className="w-9 h-9 rounded-lg object-cover"
         />
         <div>
-          <h1 className="text-lg text-foreground font-light">
+          <h1 className="text-base text-foreground font-light leading-tight">
             Bahasa <span className="font-semibold text-primary">Buddy</span>
           </h1>
           <p className="text-xs text-muted-foreground italic tracking-wide">Learn Indonesian</p>
@@ -53,16 +53,16 @@ export function DesktopSidebar() {
 
       {/* Streak Banner */}
       {streak > 0 && (
-        <div className="mx-4 mt-4 p-3 rounded-xl bg-gradient-to-r from-streak/10 to-primary/10">
+        <div className="mx-3 mt-3 p-2.5 rounded-lg bg-gradient-to-r from-streak/10 to-primary/10">
           <div className="flex items-center gap-2">
-            <Flame className="h-5 w-5 text-streak animate-fire" />
-            <span className="font-semibold text-foreground">{streak} Day Streak!</span>
+            <Flame className="h-4 w-4 text-streak animate-fire" />
+            <span className="text-sm font-semibold text-foreground">{streak} Day Streak!</span>
           </div>
         </div>
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-6 space-y-1">
+      <nav className="flex-1 px-2.5 py-4 space-y-1">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
@@ -71,7 +71,7 @@ export function DesktopSidebar() {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 relative ${
                 isActive
                   ? 'bg-primary/10 text-primary font-semibold'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -80,7 +80,7 @@ export function DesktopSidebar() {
               {isActive && (
                 <motion.div
                   layoutId="sidebar-indicator"
-                  className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-7 bg-primary rounded-r-full"
                   transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                 />
               )}
@@ -92,17 +92,17 @@ export function DesktopSidebar() {
       </nav>
 
       {/* User Card */}
-      <div className="p-4 border-t border-border">
+      <div className="p-3 border-t border-border/70">
         {isAuthenticated && !loading ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="w-full flex items-center gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors text-left cursor-pointer">
+              <button className="w-full flex items-center gap-2.5 p-2.5 rounded-lg bg-muted/40 hover:bg-muted transition-colors text-left cursor-pointer">
                 <UserAvatar avatarUrl={profile?.avatar_url} displayName={displayName} size="sm" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-foreground truncate">{displayName}</p>
+                  <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
                   <p className="text-xs text-muted-foreground">Level {level} • {levelTitle}</p>
                 </div>
-                <div className="xp-badge text-xs">
+                <div className="xp-badge text-[10px] px-2">
                   {xp} XP
                 </div>
               </button>

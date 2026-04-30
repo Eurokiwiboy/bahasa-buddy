@@ -38,6 +38,7 @@ export default function SplashCardsPage() {
   const [reviewCards, setReviewCards] = useState<string[]>([]);
   const [showCelebration, setShowCelebration] = useState(false);
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
+  const [isReviewing, setIsReviewing] = useState(false);
 
   const category = categories.find(c => c.id === categoryId);
   const gradientSuffix = category ? (categoryGradientMap[category.name] || 'greetings') : 'greetings';
@@ -55,9 +56,10 @@ export default function SplashCardsPage() {
   const currentCard = cards[currentIndex];
 
   const handleSwipe = useCallback(async (direction: 'left' | 'right') => {
-    if (!currentCard) return;
+    if (!currentCard || isReviewing) return;
 
     const isCorrect = direction === 'right';
+    setIsReviewing(true);
     setSwipeDirection(direction);
 
     if (isCorrect) {
@@ -74,11 +76,13 @@ export default function SplashCardsPage() {
         setCurrentIndex(prev => prev + 1);
         setIsFlipped(false);
         setSwipeDirection(null);
+        setIsReviewing(false);
       } else {
         setShowCelebration(true);
+        setIsReviewing(false);
       }
     }, 200);
-  }, [currentCard, currentIndex, cards.length, recordCardReview]);
+  }, [currentCard, currentIndex, cards.length, recordCardReview, isReviewing]);
 
   if (loading || hooksLoading) {
     return (
@@ -134,6 +138,7 @@ export default function SplashCardsPage() {
                 setReviewCards([]);
                 setShowCelebration(false);
                 setSwipeDirection(null);
+                setIsReviewing(false);
               }}
               className="btn-primary"
             >
@@ -185,14 +190,15 @@ export default function SplashCardsPage() {
               scale: 0.8,
               transition: { duration: 0.2 },
             }}
-            drag="x"
+            drag={isReviewing ? false : 'x'}
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.7}
             onDragEnd={(_, info) => {
+              if (isReviewing) return;
               if (info.offset.x > 100) handleSwipe('right');
               else if (info.offset.x < -100) handleSwipe('left');
             }}
-            className="cursor-pointer w-full max-w-sm select-none"
+            className={`w-full max-w-sm select-none ${isReviewing ? 'cursor-wait' : 'cursor-pointer'}`}
           >
             <div
               className={`splash-card splash-card-${gradientSuffix} aspect-[3/4] rounded-3xl shadow-xl`}
@@ -246,40 +252,31 @@ export default function SplashCardsPage() {
         </AnimatePresence>
       </div>
 
-      {/* Swipe hints */}
-      <div className="flex items-center justify-center gap-8 mt-6">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
-            <X className="h-6 w-6 text-destructive" />
-          </div>
-          <span className="text-sm">Practice more</span>
-        </div>
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <span className="text-sm">Got it!</span>
-          <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center">
-            <Check className="h-6 w-6 text-success" />
-          </div>
-        </div>
-      </div>
-
-      {/* Action buttons */}
-      <div className="flex gap-4 mt-4">
+      {/* Review actions */}
+      <div className="mt-6 grid grid-cols-2 gap-3">
         <Button
           onClick={() => handleSwipe('left')}
           variant="outline"
-          className="flex-1 h-14 rounded-2xl text-destructive border-destructive/20 hover:bg-destructive/10"
+          disabled={isReviewing}
+          aria-label="Mark this card for more practice"
+          className="h-14 rounded-2xl border-destructive/25 bg-background/70 text-destructive hover:bg-destructive/10"
         >
           <X className="h-6 w-6 mr-2" />
-          Review Later
+          Practice more
         </Button>
         <Button
           onClick={() => handleSwipe('right')}
-          className="flex-1 h-14 rounded-2xl bg-success hover:bg-success/90 text-success-foreground"
+          disabled={isReviewing}
+          aria-label="Mark this card as understood"
+          className="h-14 rounded-2xl bg-success hover:bg-success/90 text-success-foreground"
         >
           <Check className="h-6 w-6 mr-2" />
-          Got It!
+          Got it
         </Button>
       </div>
+      <p className="mt-3 text-center text-xs text-muted-foreground">
+        Swipe left to practice again, right when it feels solid.
+      </p>
     </div>
   );
 }

@@ -37,6 +37,7 @@ export default function LessonPage() {
     phrases,
     loading,
     startLesson,
+    updatePhraseProgress,
     completeLesson,
     recordExerciseAnswer,
   } = useLessons();
@@ -46,6 +47,7 @@ export default function LessonPage() {
   const [currentResult, setCurrentResult] = useState<boolean | null>(null);
   const [score, setScore] = useState(0);
   const [completed, setCompleted] = useState(false);
+  const [isAdvancing, setIsAdvancing] = useState(false);
 
   const lesson = lessons.find(l => l.id === lessonId);
   const currentPhrase = phrases[currentPhraseIndex];
@@ -153,6 +155,7 @@ export default function LessonPage() {
   }
 
   const handleAnswer = async (correct: boolean, userAnswer: string) => {
+    if (currentResult !== null) return;
     setCurrentResult(correct);
     if (correct) {
       setScore(s => s + 1);
@@ -170,13 +173,19 @@ export default function LessonPage() {
   };
 
   const handleNext = async () => {
+    if (isAdvancing) return;
+    setIsAdvancing(true);
     setCurrentResult(null);
+    await updatePhraseProgress(lesson.id, currentPhraseIndex + 1);
     if (currentPhraseIndex < phrases.length - 1) {
       setCurrentPhraseIndex(currentPhraseIndex + 1);
+      setIsAdvancing(false);
     } else {
-      const finalScore = Math.round((score / phrases.length) * 100);
+      const finalCorrect = score + (currentResult === true ? 1 : 0);
+      const finalScore = Math.round((finalCorrect / phrases.length) * 100);
       await completeLesson(lesson.id, finalScore);
       setCompleted(true);
+      setIsAdvancing(false);
     }
   };
 
@@ -204,7 +213,7 @@ export default function LessonPage() {
         isCorrect={currentResult}
         correctAnswer={currentPhrase.english_translation}
         xpEarned={currentResult === true ? xpForDifficulty(currentPhrase.difficulty_tier) : undefined}
-        onNext={handleNext}
+        onNext={isAdvancing ? () => undefined : handleNext}
         onPlayAudio={() => speakIndonesian(currentPhrase.indonesian_text)}
       >
         <ExerciseRouter

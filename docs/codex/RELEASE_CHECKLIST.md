@@ -1,6 +1,6 @@
 # Bahasa Buddy Release Checklist
 
-Use this checklist when moving Codex or Claude Code work from local files to GitHub, Supabase, and the live Lovable site.
+Use this checklist when moving Codex or Claude Code work from local files to GitHub, Supabase, and the live previous host site.
 
 ## 1. Preflight
 
@@ -14,7 +14,7 @@ npm test
 npm run build
 ```
 
-Current note: local Vitest, ESLint, TypeScript, and Vite build checks have been hanging in this workspace. Treat that as a release blocker unless you can confirm the same commands pass in another terminal, CI, Lovable, or a fresh checkout.
+Current note: local Vitest, ESLint, TypeScript, and Vite build checks have been hanging in this workspace. Treat that as a release blocker unless you can confirm the same commands pass in another terminal, CI, previous host, or a fresh checkout.
 
 For database work, start Docker Desktop and replay migrations locally:
 
@@ -81,10 +81,10 @@ git push origin main
 The public site is documented as:
 
 ```text
-https://bahasabuddy.lovable.app
+https://bahasabuddy.example
 ```
 
-If Lovable is connected to GitHub `main`, pushing to `origin/main` should trigger the site update. If it does not, open the Lovable project and manually sync/deploy the latest GitHub commit.
+If previous host is connected to GitHub `main`, pushing to `origin/main` should trigger the site update. If it does not, open the previous host project and manually sync/deploy the latest GitHub commit.
 
 Confirm production environment variables before testing:
 

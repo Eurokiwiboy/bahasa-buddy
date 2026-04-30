@@ -51,7 +51,8 @@ export function useCards() {
       const { data, error } = await supabase
         .from('categories')
         .select('*')
-        .order('unit_number', { nullsFirst: false });
+        .order('unit_number', { nullsFirst: false })
+        .order('order_index', { nullsFirst: false });
 
       if (error) throw error;
       setCategories(data || []);

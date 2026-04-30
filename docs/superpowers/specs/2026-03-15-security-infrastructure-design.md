@@ -6,22 +6,22 @@
 
 ## Context
 
-Bahasa Buddy is a React + TypeScript language learning app (Duolingo-inspired for Bahasa Indonesia) deployed publicly at `bahasabuddy.lovable.app`. It uses Supabase for auth, database, and real-time features.
+Bahasa Buddy is a React + TypeScript language learning app (Duolingo-inspired for Bahasa Indonesia) deployed publicly at `bahasabuddy.example`. It uses Supabase for auth, database, and real-time features.
 
 ### Current Problems
 
 1. **Exposed credentials** — Supabase anon key is hardcoded in `src/integrations/supabase/client.ts` AND committed in `.env` in the public GitHub repo
-2. **Two Supabase projects** — Lovable's project (efpgaa...) in `.env`, Elliott's project (zxmwfv...) hardcoded in `client.ts`. Elliott's is the canonical one.
+2. **Two Supabase projects** — previous host's project (efpgaa...) in `.env`, Elliott's project (zxmwfv...) hardcoded in `client.ts`. Elliott's is the canonical one.
 3. **No Row Level Security** — all tables are open to anyone with the anon key
 4. **No database migrations** — schema exists only in Supabase dashboard, not version-controlled
 5. **No `.env.example`** — no documentation of required environment variables
-6. **Lovable artifacts** — README still says "Lovable App", config references Lovable's project
+6. **previous host artifacts** — README still says "previous host App", config references previous host's project
 7. **No tests** — vitest is configured but no test files exist
 
 ### Decisions Made
 
 - **Canonical Supabase project:** zxmwfv... (Elliott's personal project)
-- **Lovable's project:** abandoned, all references removed
+- **previous host's project:** abandoned, all references removed
 - **Supabase management:** currently dashboard-only; will set up CLI + migrations
 - **RLS status:** none currently; will enable on all tables
 - **Deployment:** publicly live, making security fixes urgent
@@ -34,7 +34,7 @@ Bahasa Buddy is a React + TypeScript language learning app (Duolingo-inspired fo
 
 | Current State | Target State |
 |---|---|
-| `.env` committed to repo with Lovable keys | `.env` in `.gitignore`, never committed |
+| `.env` committed to repo with previous host keys | `.env` in `.gitignore`, never committed |
 | `client.ts` has hardcoded keys overriding `.env` | `client.ts` reads from `import.meta.env` |
 | Both key sets visible in git history | Git history scrubbed via BFG Repo-Cleaner |
 | No `.env.example` | `.env.example` with placeholders and comments |
@@ -66,7 +66,7 @@ VITE_SUPABASE_ANON_KEY=your-anon-key-here
 ### Manual Steps (by Elliott)
 
 1. **Rotate anon key** in Supabase dashboard (Settings → API → Regenerate anon key)
-2. **Update Lovable deployment** env vars with the new key
+2. **Update previous host deployment** env vars with the new key
 3. **Run BFG Repo-Cleaner** to scrub old keys from git history (instructions provided in plan)
 
 ---
@@ -357,17 +357,17 @@ supabase/
 
 ## Section 4: Cleanup, README & Testing
 
-### Lovable Cleanup
+### previous host Cleanup
 
 - **Remove:** `.env` from repo (add to `.gitignore`)
-- **Remove:** All Lovable project ID references (config.toml, any code comments)
+- **Remove:** All previous host project ID references (config.toml, any code comments)
 - **Update:** `client.ts` — env vars instead of hardcoded keys
 - **Update:** `supabase/config.toml` — Elliott's project ID only
 - **Add:** `.env.example` with placeholder values
 
 ### README Rewrite
 
-Replace the current Lovable template README with:
+Replace the current previous host template README with:
 
 ```
 # Bahasa Buddy

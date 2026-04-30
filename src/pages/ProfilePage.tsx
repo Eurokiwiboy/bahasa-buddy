@@ -212,12 +212,12 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen p-4 pt-6 lg:p-8">
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-3xl mx-auto space-y-5">
         {/* Profile Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="card-elevated p-6"
+          className="card-elevated p-5 lg:p-6"
         >
           <div className="flex items-center gap-4">
             <button
@@ -297,7 +297,7 @@ export default function ProfilePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="grid grid-cols-4 gap-3"
+          className="grid grid-cols-2 sm:grid-cols-4 gap-3"
         >
           {stats.map((stat, index) => (
             <motion.div
@@ -305,7 +305,7 @@ export default function ProfilePage() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.15 + index * 0.05 }}
-              className="card-elevated p-3 text-center"
+              className="card-elevated p-3 text-center bg-card/75"
             >
               <stat.icon className={`h-5 w-5 mx-auto mb-1 ${stat.color}`} />
               <p className="text-lg font-bold text-foreground">{stat.value}</p>
@@ -319,7 +319,7 @@ export default function ProfilePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="card-elevated p-5"
+          className="card-elevated p-4 sm:p-5"
         >
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-foreground flex items-center gap-2">
@@ -359,8 +359,8 @@ export default function ProfilePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 + groupIndex * 0.1 }}
-            className="card-elevated overflow-hidden"
-          >
+          className="card-elevated overflow-hidden bg-card/80"
+        >
             <h2 className="font-semibold text-foreground px-5 pt-5 pb-3">{group.title}</h2>
             <div className="divide-y divide-border">
               {group.items.map((item, itemIndex) => (
@@ -369,7 +369,7 @@ export default function ProfilePage() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.35 + groupIndex * 0.1 + itemIndex * 0.05 }}
-                  className="flex items-center justify-between px-5 py-4 hover:bg-muted/50 transition-colors"
+                  className="flex items-center justify-between px-5 py-3.5 hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <item.icon className="h-5 w-5 text-muted-foreground" />
@@ -400,7 +400,7 @@ export default function ProfilePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
           onClick={() => signOut()}
-          className="w-full card-elevated p-4 flex items-center justify-center gap-2 text-destructive hover:bg-destructive/10 transition-colors"
+          className="w-full rounded-xl border border-destructive/20 bg-destructive/5 p-4 flex items-center justify-center gap-2 text-destructive hover:bg-destructive/10 transition-colors"
         >
           <LogOut className="h-5 w-5" />
           <span className="font-medium">Log Out</span>

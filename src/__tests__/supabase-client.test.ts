@@ -8,12 +8,18 @@ describe('Supabase client security', () => {
     'utf-8'
   );
 
-  it('should read URL from environment variables first', () => {
+  it('reads URL from environment variables', () => {
     expect(clientSource).toContain('import.meta.env.VITE_SUPABASE_URL');
   });
 
-  it('should read anon key from environment variables first', () => {
+  it('reads anon key from environment variables', () => {
     expect(clientSource).toContain('import.meta.env.VITE_SUPABASE_ANON_KEY');
+  });
+
+  it('does not include hardcoded Supabase URLs or JWT fallbacks', () => {
+    expect(clientSource).not.toMatch(/['"]https:\/\/[a-z0-9]+\.supabase\.co['"]/);
+    expect(clientSource).not.toMatch(/eyJ[A-Za-z0-9_-]{20,}/);
+    expect(clientSource).toContain('Missing Supabase environment variables');
   });
 
   it('should not reference service_role key', () => {
@@ -21,9 +27,7 @@ describe('Supabase client security', () => {
     expect(clientSource).not.toContain('SUPABASE_SERVICE_ROLE');
   });
 
-  it('should only contain anon role fallbacks, never privileged keys', () => {
-    // Anon key fallback is safe (public by design, protected by RLS)
-    // But service_role or admin keys must never appear
+  it('does not contain privileged JWT-shaped keys', () => {
     const serviceRolePattern = /['"]eyJ[^'"]*"role"\s*:\s*"service_role"[^'"]*['"]/;
     expect(clientSource).not.toMatch(serviceRolePattern);
   });

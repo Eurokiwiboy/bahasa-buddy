@@ -219,6 +219,7 @@ export function useLessons() {
     const lesson = lessons.find(l => l.id === lessonId);
     const progress = lessonProgress.get(lessonId);
     if (!lesson || !progress) return;
+    if (progress.status === 'completed') return;
 
     const xpEarned = Math.round((score / 100) * lesson.xp_reward);
 
